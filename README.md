@@ -26,11 +26,11 @@ Designed to be minimal, fast, and distraction-free, ideal for learning or quick 
 
 ## UI Screenshot
 ### v2
-<p align="center">
+<p align="left">
   <img src="https://log.mkyu.one/posts/inscribe/inscribe2.png" width="650">
 </p>
 
 ### Old
-<p align="center">
+<p align="left">
   <img src="https://log.mkyu.one/posts/inscribe/inscribeold.png" width="650">
 </p>
