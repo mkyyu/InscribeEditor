@@ -1,6 +1,7 @@
 # Inscribe Editor
 A single-file lightweight in-browser Python editor and executor using Pyodide.
-Try it out at [py.mkyu.one](https://py.mkyu.one/)!
+Try it out at [py.mkyu.one](https://py.mkyu.one/)!  
+Feel free to [host this on your own GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site).
 
 ## Features
 - In-browser Python execution (WebAssembly via Pyodide)
