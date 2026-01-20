@@ -16,12 +16,15 @@ Feel free to [host this on your own GitHub Pages](https://docs.github.com/en/pag
 - All external JS/CSS/fonts vendored locally under `assets/`
 - Local-first loading for Pyodide + CodeMirror (no CDN required)
 
-## v2 Changes
+<details>
+<summary>v2 Changes</summary>
+
 - Cleaner, more focused UI
 - Improved editor and console readability
 - Status bar with execution state and cursor info
 - Better handling of partial code execution
 - Persistent editor preferences via `localStorage`
+</details>
 
 ## Why Inscribe?
 Designed to be minimal, fast, and distraction-free, ideal for learning or quick Python experiments directly in your browser.
@@ -30,11 +33,16 @@ Designed to be minimal, fast, and distraction-free, ideal for learning or quick 
 [Learn more about Inscribe Editor](https://log.mkyu.one/posts/inscribe/inscripython/)
 <br>
 
-## Local assets
+<details>
+<summary>Local assets</summary>
+
 - External JS/CSS/fonts are vendored under `assets/` for offline/local use.
 - Pyodide files live in `assets/vendor/pyodide/` and are loaded locally.
+</details>
 
-## Development
+<details>
+<summary>Development</summary>
+
 Build the TypeScript into `dist/`:
 ```sh
 npm exec --yes --package typescript@5.4.5 tsc -- --project tsconfig.json
@@ -44,8 +52,11 @@ Serve locally (Pyodide requires HTTP, not `file://`):
 ```sh
 python3 -m http.server
 ```
+</details>
 
-## UI Screenshot
+<details>
+<summary>UI Screenshot</summary>
+
 ### v2
 <p align="left">
   <img src="https://log.mkyu.one/posts/inscribe/inscribe2.png" width="650">
@@ -55,3 +66,4 @@ python3 -m http.server
 <p align="left">
   <img src="https://log.mkyu.one/posts/inscribe/inscribeold.png" width="650">
 </p>
+</details>
