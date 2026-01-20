@@ -614,6 +614,9 @@
     backdrop-filter: blur(10px) saturate(1.2);
     -webkit-backdrop-filter: blur(10px) saturate(1.2);
   }
+  .modalAbout{
+    width:min(640px, 92vw);
+  }
   @keyframes modalIn{
     from{ opacity:0; transform:translateY(6px); }
     to{ opacity:1; transform:translateY(0); }
@@ -623,6 +626,19 @@
     font-weight:600;
     letter-spacing:-0.015em;
     margin-bottom:6px;
+  }
+  .versionTag{
+    display:inline-flex;
+    align-items:center;
+    margin-left:8px;
+    padding:2px 6px;
+    font-size:11px;
+    font-weight:600;
+    border-radius:8px;
+    border:1px solid rgba(15,23,42,0.14);
+    background:rgba(15,23,42,0.06);
+    color:rgba(15,23,42,0.72);
+    vertical-align:middle;
   }
   .modal p{
     font-size:14px;

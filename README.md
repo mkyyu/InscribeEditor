@@ -11,6 +11,11 @@ Feel free to [host this on your own GitHub Pages](https://docs.github.com/en/pag
 - Open and save files using browser file APIs
 - Persistent settings and draft recovery
 
+## v3 Changes
+- Modular TypeScript source in `src/` with compiled output in `dist/`
+- All external JS/CSS/fonts vendored locally under `assets/`
+- Local-first loading for Pyodide + CodeMirror (no CDN required)
+
 ## v2 Changes
 - Cleaner, more focused UI
 - Improved editor and console readability
