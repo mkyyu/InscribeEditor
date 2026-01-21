@@ -116,6 +116,11 @@ export async function boot() {
   const printTimestamp = byId<HTMLInputElement>("printTimestamp");
   const printContentNote = byId<HTMLDivElement>("printContentNote");
   const exportRoot = byId<HTMLDivElement>("exportRoot");
+  const shareWarnOverlay = byId<HTMLDivElement>("shareWarnOverlay");
+  const shareWarnText = byId<HTMLDivElement>("shareWarnText");
+  const shareWarnCancelBtn = byId<HTMLButtonElement>("shareWarnCancelBtn");
+  const shareWarnDownloadBtn = byId<HTMLButtonElement>("shareWarnDownloadBtn");
+  const shareWarnConfirmBtn = byId<HTMLButtonElement>("shareWarnConfirmBtn");
   const shareToast = byId<HTMLDivElement>("shareToast");
   const shareToastTitle = byId<HTMLDivElement>("shareToastTitle");
   const shareToastDesc = byId<HTMLDivElement>("shareToastDesc");
@@ -909,6 +914,15 @@ builtins.input = custom_input
 
     try {
       const { url, usedCompression } = await buildShareUrl(code);
+      const warnThreshold = 1200;
+      if (url.length > warnThreshold) {
+        const proceed = await confirmLongUrl(url.length);
+        if (!proceed) {
+          addConsoleLine("Share cancelled due to long URL.", { dim: true, system: true });
+          showToast("Share cancelled", "Use Save to download a .py file.");
+          return;
+        }
+      }
       await copyToClipboard(url);
       const note = usedCompression ? "Compressed and copied to clipboard." : "Copied to clipboard.";
       addConsoleLine(`Share link created. ${note}`, { dim: true, system: true });
@@ -920,6 +934,39 @@ builtins.input = custom_input
     } finally {
       refocusEditor();
     }
+  }
+
+  function confirmLongUrl(length: number) {
+    return new Promise<boolean>((resolve) => {
+      shareWarnText.textContent = `This share link is very long (${length} characters). Continue anyway?`;
+      openShareWarn();
+
+      const cleanup = () => {
+        shareWarnCancelBtn.removeEventListener("click", onCancel);
+        shareWarnDownloadBtn.removeEventListener("click", onDownload);
+        shareWarnConfirmBtn.removeEventListener("click", onConfirm);
+      };
+      const onCancel = () => {
+        closeShareWarn();
+        cleanup();
+        resolve(false);
+      };
+      const onDownload = () => {
+        closeShareWarn();
+        saveFile();
+        cleanup();
+        resolve(false);
+      };
+      const onConfirm = () => {
+        closeShareWarn();
+        cleanup();
+        resolve(true);
+      };
+
+      shareWarnCancelBtn.addEventListener("click", onCancel);
+      shareWarnDownloadBtn.addEventListener("click", onDownload);
+      shareWarnConfirmBtn.addEventListener("click", onConfirm);
+    });
   }
 
   function toggleWrap() {
@@ -951,11 +998,18 @@ builtins.input = custom_input
   function closePrint() {
     printOverlay.classList.remove("active");
   }
+  function openShareWarn() {
+    shareWarnOverlay.classList.add("active");
+  }
+  function closeShareWarn() {
+    shareWarnOverlay.classList.remove("active");
+  }
 
   function closeAnyModal() {
     closeAbout();
     closeSettings();
     closePrint();
+    closeShareWarn();
   }
 
   aboutOverlay.addEventListener("click", (e) => {
@@ -966,6 +1020,9 @@ builtins.input = custom_input
   });
   printOverlay.addEventListener("click", (e) => {
     if (e.target === printOverlay) closePrint();
+  });
+  shareWarnOverlay.addEventListener("click", (e) => {
+    if (e.target === shareWarnOverlay) closeShareWarn();
   });
 
   function updateCursorStatus() {

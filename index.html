@@ -383,6 +383,26 @@
 
   <div class="exportRoot" id="exportRoot" aria-hidden="true"></div>
 
+  <!-- Long URL warning modal -->
+  <div class="overlay" id="shareWarnOverlay" role="dialog" aria-modal="true" aria-labelledby="shareWarnTitle">
+    <div class="modal modalSettings">
+      <div class="warnBlock">
+        <span class="material-icons" aria-hidden="true">warning</span>
+        <div>
+          <h2 id="shareWarnTitle">Share Link Warning</h2>
+          <div class="warnText" id="shareWarnText">This link is long. Continue anyway?</div>
+          <div class="warnHint">Tip: download a .py file instead to avoid very long URLs.</div>
+        </div>
+      </div>
+
+      <div class="modalRow">
+        <button class="toolBtn" id="shareWarnCancelBtn" type="button">Cancel</button>
+        <button class="toolBtn" id="shareWarnDownloadBtn" type="button">Download .py</button>
+        <button class="toolBtn primary" id="shareWarnConfirmBtn" type="button">Copy anyway</button>
+      </div>
+    </div>
+  </div>
+
 <script type="module" src="dist/main.js" defer></script>
 </body>
 </html>
