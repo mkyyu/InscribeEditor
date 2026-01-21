@@ -308,6 +308,222 @@ export async function boot() {
     consoleEl.scrollTop = consoleEl.scrollHeight;
   }
 
+  type InputRequest = {
+    prompt: string;
+    resolve: (value: string) => void;
+  };
+
+  const inputQueue: InputRequest[] = [];
+  let activeInput: InputRequest | null = null;
+
+  function showNextInput() {
+    const next = inputQueue.shift();
+    if (!next) {
+      activeInput = null;
+      return;
+    }
+    activeInput = next;
+
+    const line = document.createElement("div");
+    line.className = "consoleLine input";
+
+    const prefix = document.createElement("span");
+    prefix.className = "prefix";
+    prefix.textContent = "?";
+    line.appendChild(prefix);
+
+    const promptText = (next.prompt ?? "").toString();
+    if (promptText) {
+      const promptSpan = document.createElement("span");
+      promptSpan.className = "consolePrompt";
+      promptSpan.textContent = promptText;
+      line.appendChild(promptSpan);
+    }
+
+    const input = document.createElement("input");
+    input.className = "consoleInput";
+    input.type = "text";
+    input.autocomplete = "off";
+    input.spellcheck = false;
+    line.appendChild(input);
+
+    consoleEl.appendChild(line);
+    consoleEl.scrollTop = consoleEl.scrollHeight;
+    input.focus();
+
+    const commit = (value: string) => {
+      const echo = document.createElement("span");
+      echo.className = "consoleEcho";
+      echo.textContent = value;
+      line.removeChild(input);
+      line.appendChild(echo);
+      next.resolve(value);
+      activeInput = null;
+      showNextInput();
+    };
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        commit(input.value ?? "");
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        commit("");
+      }
+    });
+  }
+
+  function requestConsoleInput(prompt = ""): Promise<string> {
+    return new Promise((resolve) => {
+      inputQueue.push({ prompt, resolve });
+      if (!activeInput) showNextInput();
+    });
+  }
+
+  (window as any).__inscribeReadline = (prompt?: string) =>
+    requestConsoleInput(prompt ? String(prompt) : "");
+
+  function rewriteInputCalls(source: string) {
+    const isIdentChar = (ch: string) => /[A-Za-z0-9_]/.test(ch);
+    const isSpace = (ch: string) => /\s/.test(ch);
+    const readPrevToken = (idx: number) => {
+      let j = idx - 1;
+      while (j >= 0 && isSpace(source[j])) j--;
+      if (j < 0) return "";
+      let end = j;
+      while (j >= 0 && isIdentChar(source[j])) j--;
+      return source.slice(j + 1, end + 1);
+    };
+
+    let i = 0;
+    let out = "";
+    let changed = false;
+    let state: "normal" | "single" | "double" | "triple_single" | "triple_double" | "comment" =
+      "normal";
+
+    const startsWithAt = (str: string) => source.startsWith(str, i);
+
+    while (i < source.length) {
+      const ch = source[i];
+
+      if (state === "comment") {
+        out += ch;
+        if (ch === "\n") state = "normal";
+        i += 1;
+        continue;
+      }
+
+      if (state === "single") {
+        out += ch;
+        if (ch === "\\" && i + 1 < source.length) {
+          out += source[i + 1];
+          i += 2;
+          continue;
+        }
+        if (ch === "'") state = "normal";
+        i += 1;
+        continue;
+      }
+
+      if (state === "double") {
+        out += ch;
+        if (ch === "\\" && i + 1 < source.length) {
+          out += source[i + 1];
+          i += 2;
+          continue;
+        }
+        if (ch === '"') state = "normal";
+        i += 1;
+        continue;
+      }
+
+      if (state === "triple_single") {
+        if (startsWithAt("'''")) {
+          out += "'''";
+          i += 3;
+          state = "normal";
+          continue;
+        }
+        out += ch;
+        i += 1;
+        continue;
+      }
+
+      if (state === "triple_double") {
+        if (startsWithAt('"""')) {
+          out += '"""';
+          i += 3;
+          state = "normal";
+          continue;
+        }
+        out += ch;
+        i += 1;
+        continue;
+      }
+
+      if (ch === "#") {
+        out += ch;
+        state = "comment";
+        i += 1;
+        continue;
+      }
+      if (startsWithAt("'''")) {
+        out += "'''";
+        i += 3;
+        state = "triple_single";
+        continue;
+      }
+      if (startsWithAt('"""')) {
+        out += '"""';
+        i += 3;
+        state = "triple_double";
+        continue;
+      }
+      if (ch === "'") {
+        out += ch;
+        state = "single";
+        i += 1;
+        continue;
+      }
+      if (ch === '"') {
+        out += ch;
+        state = "double";
+        i += 1;
+        continue;
+      }
+
+      if (startsWithAt("input")) {
+        const prev = i > 0 ? source[i - 1] : "";
+        if (prev && (isIdentChar(prev) || prev === ".")) {
+          out += ch;
+          i += 1;
+          continue;
+        }
+
+        let j = i + 5;
+        while (j < source.length && isSpace(source[j])) j++;
+        if (source[j] !== "(") {
+          out += ch;
+          i += 1;
+          continue;
+        }
+
+        const prevToken = readPrevToken(i);
+        const needsAwait = prevToken !== "await";
+        out += `${needsAwait ? "await " : ""}__import__("js").__inscribeReadline(`;
+        i = j + 1;
+        changed = true;
+        continue;
+      }
+
+      out += ch;
+      i += 1;
+    }
+
+    return { code: out, changed };
+  }
+
   function clearConsole(keepBanner = true) {
     consoleEl.innerHTML = "";
     if (keepBanner) addConsoleLine("Ready. Run to load Pyodide.", { dim: true });
@@ -355,8 +571,7 @@ sys.stderr = sys.stdout
     await state.pyodideInstance.runPythonAsync(`
 import builtins
 def custom_input(prompt=""):
-    from js import window
-    return window.prompt(prompt)
+    raise RuntimeError("input() is handled by the console UI. If you see this, the editor could not rewrite input() calls.")
 builtins.input = custom_input
     `);
 
@@ -398,7 +613,9 @@ builtins.input = custom_input
       addConsoleLine(`Executing (${getRunModeLabel(mode)})…`, { dim: true });
 
       const t0 = performance.now();
-      await state.pyodideInstance.runPythonAsync(code);
+      const rewritten = rewriteInputCalls(code);
+      const codeToRun = rewritten.changed ? rewritten.code : code;
+      await state.pyodideInstance.runPythonAsync(codeToRun);
 
       const output = state.pyodideInstance.runPython("sys.stdout.getvalue()");
       if (output && output.trim().length) {
