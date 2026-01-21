@@ -123,6 +123,17 @@
             </button>
 
             <div class="menu" id="moreMenu" role="menu" aria-label="More actions">
+              <button class="menuItem" id="settingsBtn" type="button" role="menuitem">
+                <span class="material-icons" aria-hidden="true">tune</span>
+                <span class="miLabel">Settings</span>
+                <span class="miHint" id="hintSettings">⌘ ,</span>
+              </button>
+
+              <button class="menuItem" id="resetBtn" type="button" role="menuitem">
+                <span class="material-icons" aria-hidden="true">restart_alt</span>
+                <span class="miLabel">Reset Pyodide</span>
+              </button>
+
               <button class="menuItem" id="printBtn" type="button" role="menuitem">
                 <span class="material-icons" aria-hidden="true">print</span>
                 <span class="miLabel">Print / Export</span>
@@ -135,26 +146,10 @@
                 <span class="miHint">URL</span>
               </button>
 
-              <button class="menuItem" id="resetBtn" type="button" role="menuitem">
-                <span class="material-icons" aria-hidden="true">restart_alt</span>
-                <span class="miLabel">Reset</span>
-              </button>
-
-              <button class="menuItem" id="settingsBtn" type="button" role="menuitem">
-                <span class="material-icons" aria-hidden="true">tune</span>
-                <span class="miLabel">Settings</span>
-                <span class="miHint" id="hintSettings">⌘ ,</span>
-              </button>
-
               <button class="menuItem" id="aboutBtn" type="button" role="menuitem">
                 <span class="material-icons" aria-hidden="true">info_outline</span>
                 <span class="miLabel">About</span>
               </button>
-
-              <a class="menuItem" role="menuitem" href="https://github.com/mkyyu/python-web-ide" target="_blank" rel="noreferrer">
-                <span class="material-icons" aria-hidden="true">open_in_new</span>
-                <span class="miLabel">View source</span>
-              </a>
             </div>
           </div>
 
