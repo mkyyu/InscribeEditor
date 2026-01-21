@@ -85,7 +85,9 @@ npm exec --yes --package typescript@5.4.5 tsc -- --project tsconfig.json
 
 Pyodide requires HTTP (not <code>file://</code>):
 
+```sh
 python3 -m http.server
+```
 
 </details>
 
