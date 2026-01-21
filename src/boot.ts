@@ -158,6 +158,15 @@ export async function boot() {
     setClass(sbPy, state.pyodideReady ? "good" : "bad");
   }
 
+  function registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js").catch((err) => {
+        console.warn("[PWA] Service worker registration failed:", err);
+      });
+    });
+  }
+
   function loadPrefs(): Prefs {
     try {
       const raw = safeLS.get(LS_KEYS.PREFS);
@@ -1201,6 +1210,7 @@ builtins.input = custom_input
   updateCursorStatus();
   updateClock();
   updateRunModeUI();
+  registerServiceWorker();
   refocusEditor();
   if (loadingOverlay) {
     requestAnimationFrame(() => {
