@@ -19,10 +19,10 @@ It’s designed to be minimal, fast, and distraction-free — ideal for learning
 
 ## What’s New in v3
 
-- **Modular TypeScript** source under `src/`
+- Modular TypeScript source under `src/`
 - Compiled output emitted to `dist/`
-- **All external JS, CSS, and fonts vendored locally** under `assets/`
-- Local-first loading for **Pyodide + CodeMirror** (no CDN required)
+- All external JS, CSS, and fonts vendored locally under `assets/`
+- Local-first loading for Pyodide + CodeMirror (no CDN required)
 
 v3 is a structural refactor — behavior and UI remain familiar, but the codebase is cleaner, more maintainable, and ready for future features.
 
