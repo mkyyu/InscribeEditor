@@ -1,0 +1,61 @@
+import { DEFAULT_PREFS, LS_KEYS } from "../constants.js";
+import { safeLS } from "../utils/storage.js";
+export function loadPrefs() {
+    try {
+        const raw = safeLS.get(LS_KEYS.PREFS);
+        if (!raw)
+            return { ...DEFAULT_PREFS };
+        return { ...DEFAULT_PREFS, ...JSON.parse(raw) };
+    }
+    catch {
+        return { ...DEFAULT_PREFS };
+    }
+}
+export function savePrefs(prefs) {
+    try {
+        safeLS.set(LS_KEYS.PREFS, JSON.stringify(prefs));
+    }
+    catch {
+        // ignore
+    }
+}
+export function applyPrefs(prefs, editor, dom) {
+    dom.dynamicStyles.textContent = `
+    .CodeMirror{ font-size:${prefs.editorFontSize}px; }
+    #console{ font-size:${prefs.consoleFontSize}px; }
+  `;
+    editor.setOption("lineWrapping", !!prefs.lineWrap);
+    editor.refresh();
+    dom.editorSizeRange.value = String(prefs.editorFontSize);
+    dom.consoleSizeRange.value = String(prefs.consoleFontSize);
+    dom.editorSizeLabel.textContent = `${prefs.editorFontSize.toFixed(2)}px`;
+    dom.consoleSizeLabel.textContent = `${prefs.consoleFontSize.toFixed(2)}px`;
+    dom.wrapToggle.checked = !!prefs.lineWrap;
+    dom.execTimeToggle.checked = !!prefs.showExecTime;
+}
+export function bindPrefsUI(prefs, editor, dom, onChange) {
+    dom.editorSizeRange.addEventListener("input", () => {
+        prefs.editorFontSize = parseFloat(dom.editorSizeRange.value);
+        savePrefs(prefs);
+        applyPrefs(prefs, editor, dom);
+        onChange === null || onChange === void 0 ? void 0 : onChange();
+    });
+    dom.consoleSizeRange.addEventListener("input", () => {
+        prefs.consoleFontSize = parseFloat(dom.consoleSizeRange.value);
+        savePrefs(prefs);
+        applyPrefs(prefs, editor, dom);
+        onChange === null || onChange === void 0 ? void 0 : onChange();
+    });
+    dom.wrapToggle.addEventListener("change", () => {
+        prefs.lineWrap = !!dom.wrapToggle.checked;
+        savePrefs(prefs);
+        applyPrefs(prefs, editor, dom);
+        onChange === null || onChange === void 0 ? void 0 : onChange();
+    });
+    dom.execTimeToggle.addEventListener("change", () => {
+        prefs.showExecTime = !!dom.execTimeToggle.checked;
+        savePrefs(prefs);
+        applyPrefs(prefs, editor, dom);
+        onChange === null || onChange === void 0 ? void 0 : onChange();
+    });
+}
