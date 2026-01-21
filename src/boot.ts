@@ -314,6 +314,29 @@ export async function boot() {
     consoleEl.scrollTop = consoleEl.scrollHeight;
   }
 
+  let stdoutBuffer = "";
+
+  function flushStdoutBuffer() {
+    if (!stdoutBuffer.length) return;
+    addConsoleLine(stdoutBuffer);
+    stdoutBuffer = "";
+  }
+
+  function handleStdout(text: string) {
+    const normalized = String(text ?? "").replace(/\r/g, "");
+    stdoutBuffer += normalized;
+    const lines = stdoutBuffer.split("\n");
+    stdoutBuffer = lines.pop() ?? "";
+    lines.forEach((line) => addConsoleLine(line));
+  }
+
+  (window as any).inscribeStdout = (text?: string) => {
+    handleStdout(text ?? "");
+  };
+  (window as any).inscribeStdoutFlush = () => {
+    flushStdoutBuffer();
+  };
+
   const SHARE_PREFIX = "v1:";
   let toastTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -693,9 +716,16 @@ export async function boot() {
 
     state.pyodideInstance.runPython(`
 import sys
-from io import StringIO
-sys.stdout = StringIO()
-sys.stderr = sys.stdout
+import js
+
+class JSConsole:
+    def write(self, s):
+        js.inscribeStdout(s)
+    def flush(self):
+        js.inscribeStdoutFlush()
+
+sys.stdout = JSConsole()
+sys.stderr = JSConsole()
     `);
 
     await state.pyodideInstance.runPythonAsync(`
@@ -716,6 +746,7 @@ builtins.input = custom_input
   function resetEnvironment() {
     state.pyodideInstance = null;
     state.pyodideReady = false;
+    stdoutBuffer = "";
     addConsoleLine("Environment reset. Next run will reload Pyodide.", {
       dim: true,
       system: true
@@ -731,6 +762,7 @@ builtins.input = custom_input
 
     runBtn.disabled = true;
     runModeBtn.disabled = true;
+    stdoutBuffer = "";
 
     try {
       if (!state.pyodideInstance) await initializePyodide();
@@ -751,14 +783,7 @@ builtins.input = custom_input
       const codeToRun = rewritten.changed ? rewritten.code : code;
       await state.pyodideInstance.runPythonAsync(codeToRun);
 
-      const output = state.pyodideInstance.runPython("sys.stdout.getvalue()");
-      if (output && output.trim().length) {
-        output.split("\n").forEach((line: string) => {
-          if (line.trim()) addConsoleLine(line);
-        });
-      }
-
-      state.pyodideInstance.runPython("sys.stdout.truncate(0); sys.stdout.seek(0)");
+      flushStdoutBuffer();
 
       const dt = performance.now() - t0;
       if (prefs.showExecTime) {
