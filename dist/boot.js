@@ -94,6 +94,7 @@ export async function boot() {
     const editorSizeLabel = byId("editorSizeLabel");
     const consoleSizeLabel = byId("consoleSizeLabel");
     const wrapToggle = byId("wrapToggle");
+    const execTimeToggle = byId("execTimeToggle");
     const shortcutBody = byId("shortcutBody");
     const dynamicStyles = byId("dynamicStyles");
     const state = {
@@ -340,7 +341,9 @@ builtins.input = custom_input
             }
             state.pyodideInstance.runPython("sys.stdout.truncate(0); sys.stdout.seek(0)");
             const dt = performance.now() - t0;
-            addConsoleLine(`Finished in ${formatDuration(dt)}.`, { dim: true });
+            if (prefs.showExecTime) {
+                addConsoleLine(`Finished in ${formatDuration(dt)}.`, { dim: true });
+            }
         }
         catch (err) {
             const msg = (_b = (_a = err === null || err === void 0 ? void 0 : err.toString) === null || _a === void 0 ? void 0 : _a.call(err)) !== null && _b !== void 0 ? _b : String(err);
@@ -564,6 +567,7 @@ builtins.input = custom_input
         editorSizeLabel.textContent = `${prefs.editorFontSize.toFixed(2)}px`;
         consoleSizeLabel.textContent = `${prefs.consoleFontSize.toFixed(2)}px`;
         wrapToggle.checked = !!prefs.lineWrap;
+        execTimeToggle.checked = !!prefs.showExecTime;
     }
     let dragging = false;
     let startY = 0;
@@ -650,6 +654,11 @@ builtins.input = custom_input
     });
     wrapToggle.addEventListener("change", () => {
         prefs.lineWrap = !!wrapToggle.checked;
+        savePrefs(prefs);
+        applyPrefs();
+    });
+    execTimeToggle.addEventListener("change", () => {
+        prefs.showExecTime = !!execTimeToggle.checked;
         savePrefs(prefs);
         applyPrefs();
     });

@@ -7,5 +7,6 @@ export const LS_KEYS = {
 export const DEFAULT_PREFS = {
     editorFontSize: 14.0,
     consoleFontSize: 13.5,
-    lineWrap: false
+    lineWrap: false,
+    showExecTime: true
 };

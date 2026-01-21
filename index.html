@@ -212,60 +212,65 @@
 
   <!-- Settings modal -->
   <div class="overlay" id="settingsOverlay" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-    <div class="modal">
-      <h2 id="settingsTitle">Settings</h2>
-      <p>Quiet controls that improve long-session comfort. Stored locally in your browser.</p>
+    <div class="modal modalSettings">
+      <div class="settingsHeader">
+        <div>
+          <h2 id="settingsTitle">Settings</h2>
+          <p class="settingsIntro">Quiet controls that improve long-session comfort. Stored locally in your browser.</p>
+        </div>
+      </div>
 
-      <div class="prefs">
-        <div class="prefItem">
-          <div class="prefTitle">Font sizes</div>
+      <div class="settingsGrid">
+        <section class="settingsCard" aria-label="Preferences">
+          <div class="settingsCardTitle">Preferences</div>
 
-          <div class="prefRow">
-            <label for="editorSizeRange">Editor size</label>
-            <div class="rangeWrap">
-              <input id="editorSizeRange" type="range" min="12" max="18" step="0.25" />
-              <span class="chip" id="editorSizeLabel">14.00px</span>
+          <div class="settingsSection">
+            <div class="settingsSectionTitle">Font sizes</div>
+            <div class="settingsRow">
+              <label class="settingsLabel" for="editorSizeRange">Editor size</label>
+              <div class="settingsControl settingsRange">
+                <input id="editorSizeRange" type="range" min="12" max="18" step="0.25" />
+                <span class="settingsValue" id="editorSizeLabel">14.00px</span>
+              </div>
+            </div>
+            <div class="settingsRow">
+              <label class="settingsLabel" for="consoleSizeRange">Console size</label>
+              <div class="settingsControl settingsRange">
+                <input id="consoleSizeRange" type="range" min="12" max="18" step="0.25" />
+                <span class="settingsValue" id="consoleSizeLabel">13.50px</span>
+              </div>
             </div>
           </div>
 
-          <div style="height:10px;"></div>
-
-          <div class="prefRow">
-            <label for="consoleSizeRange">Console size</label>
-            <div class="rangeWrap">
-              <input id="consoleSizeRange" type="range" min="12" max="18" step="0.25" />
-              <span class="chip" id="consoleSizeLabel">13.50px</span>
+          <div class="settingsSection">
+            <div class="settingsSectionTitle">Editor behavior</div>
+            <div class="settingsRow">
+              <label class="settingsLabel toggle" for="wrapToggle">
+                <input id="wrapToggle" type="checkbox" />
+                <span>Line wrap</span>
+              </label>
             </div>
-          </div>
-        </div>
-
-        <div class="prefItem">
-          <div class="prefTitle">Editor behavior</div>
-
-          <div class="prefRow">
-            <label class="toggle" for="wrapToggle">
-              <input id="wrapToggle" type="checkbox" />
-              <span>Line wrap</span>
-            </label>
-
-            <span class="paneMeta" style="max-width:none;">Also available from the editor header</span>
+            <div class="settingsNote">Run selection if highlighted. Use <b># %%</b> to define cells.</div>
           </div>
 
-          <div style="height:10px;"></div>
+          <div class="settingsSection">
+            <div class="settingsSectionTitle">Runtime</div>
+            <div class="settingsRow">
+              <label class="settingsLabel toggle" for="execTimeToggle">
+                <input id="execTimeToggle" type="checkbox" />
+                <span>Show execution time</span>
+              </label>
+            </div>
+            <div class="settingsNote">Adds a "Finished in ..." line after runs.</div>
+          </div>
+        </section>
 
-          <p style="margin-bottom:0;">
-            <span class="paneMeta" style="max-width:none; white-space:normal;">
-              Run selection if highlighted. Use <b># %%</b> to define cells.
-            </span>
-          </p>
-        </div>
-
-        <div class="prefItem">
-          <div class="prefTitle">Shortcuts</div>
+        <section class="settingsCard" aria-label="Shortcuts">
+          <div class="settingsCardTitle">Shortcuts</div>
           <table class="shortcuts" aria-label="Keyboard shortcuts">
             <tbody id="shortcutBody"></tbody>
           </table>
-        </div>
+        </section>
       </div>
 
       <div class="modalRow">
