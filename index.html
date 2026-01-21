@@ -123,6 +123,12 @@
             </button>
 
             <div class="menu" id="moreMenu" role="menu" aria-label="More actions">
+              <button class="menuItem" id="printBtn" type="button" role="menuitem">
+                <span class="material-icons" aria-hidden="true">print</span>
+                <span class="miLabel">Print / Export</span>
+                <span class="miHint" id="hintPrint">⌘ P</span>
+              </button>
+
               <button class="menuItem" id="shareMenuBtn" type="button" role="menuitem">
                 <span class="material-icons" aria-hidden="true">share</span>
                 <span class="miLabel">Share link</span>
@@ -310,6 +316,92 @@
       </div>
     </div>
   </div>
+
+  <!-- Print / Export modal -->
+  <div class="overlay" id="printOverlay" role="dialog" aria-modal="true" aria-labelledby="printTitle">
+    <div class="modal modalSettings">
+      <div class="settingsHeader">
+        <div>
+          <h2 id="printTitle">Print / Export</h2>
+          <p class="settingsIntro">Prepare a clean export of your code and output.</p>
+        </div>
+      </div>
+
+      <div class="settingsGrid">
+        <section class="settingsCard" aria-label="Content selection">
+          <div class="settingsCardTitle">Content</div>
+          <div class="settingsSection">
+            <div class="settingsRow">
+              <label class="settingsLabel toggle" for="printIncludeCode">
+                <input id="printIncludeCode" type="checkbox" />
+                <span>Code</span>
+              </label>
+              <label class="settingsLabel toggle" for="printIncludeOutput">
+                <input id="printIncludeOutput" type="checkbox" />
+                <span>Output</span>
+              </label>
+            </div>
+            <div class="settingsNote" id="printContentNote">Select at least one item to print.</div>
+          </div>
+        </section>
+
+        <section class="settingsCard" aria-label="Layout options">
+          <div class="settingsCardTitle">Layout</div>
+          <div class="settingsSection">
+            <div class="settingsRow">
+              <label class="settingsLabel toggle" for="printLineNumbers">
+                <input id="printLineNumbers" type="checkbox" />
+                <span>Show line numbers</span>
+              </label>
+              <label class="settingsLabel toggle" for="printWrapLines">
+                <input id="printWrapLines" type="checkbox" />
+                <span>Wrap long lines</span>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <section class="settingsCard" aria-label="Metadata inclusion">
+          <div class="settingsCardTitle">Metadata</div>
+          <div class="settingsSection">
+            <div class="settingsRow">
+              <label class="settingsLabel toggle" for="printBranding">
+                <input id="printBranding" type="checkbox" />
+                <span>Include branding</span>
+              </label>
+              <label class="settingsLabel toggle" for="printTimestamp">
+                <input id="printTimestamp" type="checkbox" />
+                <span>Include timestamp</span>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <section class="settingsCard" aria-label="Output format">
+          <div class="settingsCardTitle">Format</div>
+          <div class="settingsSection">
+            <div class="settingsRow">
+              <label class="settingsLabel toggle" for="printFormatPrint">
+                <input id="printFormatPrint" type="radio" name="printFormat" />
+                <span>Print</span>
+              </label>
+              <label class="settingsLabel toggle" for="printFormatPdf">
+                <input id="printFormatPdf" type="radio" name="printFormat" />
+                <span>Export as PDF</span>
+              </label>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="modalRow">
+        <button class="toolBtn" id="printCancelBtn" type="button">Cancel</button>
+        <button class="toolBtn primary" id="printConfirmBtn" type="button">Print</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="exportRoot" id="exportRoot" aria-hidden="true"></div>
 
 <script type="module" src="dist/main.js" defer></script>
 </body>

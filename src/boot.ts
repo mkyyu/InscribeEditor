@@ -104,6 +104,20 @@ export async function boot() {
   const closeAboutBtn = byId<HTMLButtonElement>("closeAboutBtn");
   const settingsOverlay = byId<HTMLDivElement>("settingsOverlay");
   const closeSettingsBtn = byId<HTMLButtonElement>("closeSettingsBtn");
+  const printOverlay = byId<HTMLDivElement>("printOverlay");
+  const printBtn = byId<HTMLButtonElement>("printBtn");
+  const printCancelBtn = byId<HTMLButtonElement>("printCancelBtn");
+  const printConfirmBtn = byId<HTMLButtonElement>("printConfirmBtn");
+  const printIncludeCode = byId<HTMLInputElement>("printIncludeCode");
+  const printIncludeOutput = byId<HTMLInputElement>("printIncludeOutput");
+  const printLineNumbers = byId<HTMLInputElement>("printLineNumbers");
+  const printWrapLines = byId<HTMLInputElement>("printWrapLines");
+  const printBranding = byId<HTMLInputElement>("printBranding");
+  const printTimestamp = byId<HTMLInputElement>("printTimestamp");
+  const printFormatPrint = byId<HTMLInputElement>("printFormatPrint");
+  const printFormatPdf = byId<HTMLInputElement>("printFormatPdf");
+  const printContentNote = byId<HTMLDivElement>("printContentNote");
+  const exportRoot = byId<HTMLDivElement>("exportRoot");
   const shareToast = byId<HTMLDivElement>("shareToast");
   const shareToastTitle = byId<HTMLDivElement>("shareToastTitle");
   const shareToastDesc = byId<HTMLDivElement>("shareToastDesc");
@@ -122,6 +136,7 @@ export async function boot() {
   const hintOpen = byId<HTMLSpanElement>("hintOpen");
   const hintSave = byId<HTMLSpanElement>("hintSave");
   const hintSettings = byId<HTMLSpanElement>("hintSettings");
+  const hintPrint = byId<HTMLSpanElement>("hintPrint");
 
   const editorSizeRange = byId<HTMLInputElement>("editorSizeRange");
   const consoleSizeRange = byId<HTMLInputElement>("consoleSizeRange");
@@ -295,6 +310,9 @@ export async function boot() {
     const curr = editor.getValue();
     setDirty(curr !== lastSavedContent);
     saveDraftDebounced();
+    if (printOverlay.classList.contains("active")) {
+      updatePrintConfirmState();
+    }
   });
 
   window.addEventListener("beforeunload", (e) => {
@@ -929,10 +947,17 @@ builtins.input = custom_input
   function closeSettings() {
     settingsOverlay.classList.remove("active");
   }
+  function openPrint() {
+    printOverlay.classList.add("active");
+  }
+  function closePrint() {
+    printOverlay.classList.remove("active");
+  }
 
   function closeAnyModal() {
     closeAbout();
     closeSettings();
+    closePrint();
   }
 
   aboutOverlay.addEventListener("click", (e) => {
@@ -940,6 +965,9 @@ builtins.input = custom_input
   });
   settingsOverlay.addEventListener("click", (e) => {
     if (e.target === settingsOverlay) closeSettings();
+  });
+  printOverlay.addEventListener("click", (e) => {
+    if (e.target === printOverlay) closePrint();
   });
 
   function updateCursorStatus() {
@@ -969,12 +997,14 @@ builtins.input = custom_input
     hintOpen.textContent = `${mod} O`;
     hintSave.textContent = `${mod} S`;
     hintSettings.textContent = `${mod} ,`;
+    hintPrint.textContent = `${mod} P`;
 
     const shortcuts = [
       { keys: [mod, enterKey], desc: "Run (uses Run Mode config)" },
       { keys: [mod, "Shift", enterKey], desc: "Run current cell (# %%)" },
       { keys: [mod, "S"], desc: "Save file" },
       { keys: [mod, "O"], desc: "Open file" },
+      { keys: [mod, "P"], desc: "Print / Export" },
       { keys: [mod, ","], desc: "Open Settings" },
       { keys: ["Esc"], desc: "Close modals / menus" }
     ];
@@ -991,6 +1021,201 @@ builtins.input = custom_input
 
   function isModKey(e: KeyboardEvent) {
     return e.metaKey || e.ctrlKey;
+  }
+
+  function getTimestamp() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${y}-${m}-${day} ${hh}:${mm}`;
+  }
+
+  function collectConsoleOutput() {
+    const lines = Array.from(consoleEl.querySelectorAll(".consoleLine"))
+      .filter((line) => !line.classList.contains("system"))
+      .map((line) => (line.textContent || "").replace(/\s+$/g, ""));
+    return lines
+      .map((line) => {
+        if (line.startsWith(">")) return line.slice(1).trimStart();
+        if (line.startsWith("*")) return line.slice(1).trimStart();
+        if (line.startsWith("?")) return line.slice(1).trimStart();
+        return line;
+      })
+      .join("\n")
+      .trim();
+  }
+
+  function buildExportLayout(opts: {
+    includeCode: boolean;
+    includeOutput: boolean;
+    lineNumbers: boolean;
+    wrap: boolean;
+    includeBranding: boolean;
+    includeTimestamp: boolean;
+  }) {
+    exportRoot.innerHTML = "";
+
+    const header = document.createElement("div");
+    header.className = "exportHeader";
+    const headerLines: string[] = [];
+    if (opts.includeBranding) {
+      headerLines.push("Inscribe Editor");
+      headerLines.push("");
+    }
+    if (opts.includeTimestamp) {
+      headerLines.push(`Printed / Exported: ${getTimestamp()}`);
+    }
+    headerLines.forEach((line, idx) => {
+      const row = document.createElement("div");
+      const cls =
+        opts.includeBranding && idx === 0
+          ? "exportBrand"
+          : opts.includeBranding && idx === 1
+            ? "exportSite"
+            : "";
+      row.className = cls;
+      row.innerHTML = line ? `<strong>${escapeHtml(line)}</strong>` : "&nbsp;";
+      header.appendChild(row);
+    });
+    if (headerLines.length) exportRoot.appendChild(header);
+
+    const code = editor.getValue();
+    const output = collectConsoleOutput();
+
+    if (opts.includeCode && code.trim().length) {
+      const section = document.createElement("section");
+      section.className = "exportSection";
+      section.innerHTML = `<div class="exportTitle">Code</div>`;
+      const pre = document.createElement("pre");
+      pre.className = `exportBlock${opts.wrap ? " wrap" : ""}`;
+
+      if (opts.lineNumbers) {
+        const lines = code.replace(/\r\n/g, "\n").split("\n");
+        const pad = String(lines.length).length;
+        pre.textContent = lines
+          .map((line, idx) => `${String(idx + 1).padStart(pad, " ")} | ${line}`)
+          .join("\n");
+      } else {
+        pre.textContent = code;
+      }
+      section.appendChild(pre);
+      exportRoot.appendChild(section);
+    }
+
+    if (opts.includeOutput && output.trim().length) {
+      const section = document.createElement("section");
+      section.className = "exportSection";
+      section.innerHTML = `<div class="exportTitle">Output</div>`;
+      const pre = document.createElement("pre");
+      pre.className = `exportBlock${opts.wrap ? " wrap" : ""}`;
+      pre.textContent = output;
+      section.appendChild(pre);
+      exportRoot.appendChild(section);
+    }
+
+  }
+
+  function setExportMetadata(isPdf: boolean) {
+    const originalTitle = document.title;
+    const originalAuthor = document.querySelector('meta[name="author"]')?.getAttribute("content");
+    const originalSubject = document.querySelector('meta[name="subject"]')?.getAttribute("content");
+
+    const setMeta = (name: string, value: string) => {
+      let meta = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.setAttribute("name", name);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute("content", value);
+    };
+
+    if (isPdf) {
+      document.title = "Inscribe Editor - PDF Export";
+      setMeta("author", "Inscribe Editor");
+      setMeta("subject", "Python code and output");
+    }
+
+    return () => {
+      document.title = originalTitle;
+      const authorMeta = document.querySelector('meta[name="author"]') as HTMLMetaElement | null;
+      const subjectMeta = document.querySelector('meta[name="subject"]') as HTMLMetaElement | null;
+      if (authorMeta) {
+        if (!originalAuthor) authorMeta.remove();
+        else authorMeta.setAttribute("content", originalAuthor);
+      }
+      if (subjectMeta) {
+        if (!originalSubject) subjectMeta.remove();
+        else subjectMeta.setAttribute("content", originalSubject);
+      }
+    };
+  }
+
+  function updatePrintConfirmState() {
+    const codeSelected = printIncludeCode.checked;
+    const outputSelected = printIncludeOutput.checked;
+    const codeExists = editor.getValue().trim().length > 0;
+    const ok = (codeSelected || outputSelected) && codeExists;
+    printConfirmBtn.disabled = !ok;
+    if (!codeSelected && !outputSelected) {
+      printContentNote.textContent = "Select at least one item to print.";
+    } else if (!codeExists) {
+      printContentNote.textContent = "No code detected. Add code to enable export.";
+    } else {
+      printContentNote.textContent = "Ready to print or export.";
+    }
+  }
+
+  function openPrintModal() {
+    closeMenu();
+    closeRunMenu();
+    printIncludeCode.checked = true;
+    printIncludeOutput.checked = true;
+    printLineNumbers.checked = false;
+    printWrapLines.checked = true;
+    printBranding.checked = true;
+    printTimestamp.checked = true;
+    printFormatPrint.checked = true;
+    printConfirmBtn.textContent = "Print";
+    updatePrintConfirmState();
+    openPrint();
+  }
+
+  function handlePrintConfirm() {
+    const includeCode = printIncludeCode.checked;
+    const includeOutput = printIncludeOutput.checked;
+    const lineNumbers = printLineNumbers.checked;
+    const wrap = printWrapLines.checked;
+    const includeBranding = printBranding.checked;
+    const includeTimestamp = printTimestamp.checked;
+    const isPdf = printFormatPdf.checked;
+
+    buildExportLayout({
+      includeCode,
+      includeOutput,
+      lineNumbers,
+      wrap,
+      includeBranding,
+      includeTimestamp
+    });
+
+    const restoreMeta = setExportMetadata(isPdf);
+    document.body.classList.add("exporting");
+    closePrint();
+
+    const cleanup = () => {
+      document.body.classList.remove("exporting");
+      restoreMeta();
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+
+    setTimeout(() => {
+      window.print();
+    }, 0);
   }
 
   function openMenu() {
@@ -1063,6 +1288,11 @@ builtins.input = custom_input
       if (e.key.toLowerCase() === "o") {
         e.preventDefault();
         openFile();
+        return;
+      }
+      if (e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        openPrintModal();
         return;
       }
       if (e.key === ",") {
@@ -1151,6 +1381,10 @@ builtins.input = custom_input
 
   moreBtn.addEventListener("click", toggleMenu);
 
+  printBtn.addEventListener("click", () => {
+    closeMenu();
+    openPrintModal();
+  });
   shareMenuBtn.addEventListener("click", () => {
     closeMenu();
     void shareCode();
@@ -1180,6 +1414,27 @@ builtins.input = custom_input
   closeSettingsBtn.addEventListener("click", () => {
     closeSettings();
     refocusEditor();
+  });
+  printCancelBtn.addEventListener("click", () => {
+    closePrint();
+    refocusEditor();
+  });
+  printConfirmBtn.addEventListener("click", handlePrintConfirm);
+
+  [
+    printIncludeCode,
+    printIncludeOutput,
+    printLineNumbers,
+    printWrapLines,
+    printBranding,
+    printTimestamp,
+    printFormatPrint,
+    printFormatPdf
+  ].forEach((input) => {
+    input.addEventListener("change", () => {
+      printConfirmBtn.textContent = printFormatPdf.checked ? "Export PDF" : "Print";
+      updatePrintConfirmState();
+    });
   });
 
   editorSizeRange.addEventListener("input", () => {
