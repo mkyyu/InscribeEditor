@@ -53,14 +53,6 @@ It’s built to:
 Perfect for learning, demos, or environments where installing Python isn’t ideal.
 
 
-
-## Background
-
-- [Inscribe Editor v2 overview](https://log.mkyu.one/posts/inscribe/newinscribe/)
-- [Original Inscribe Editor write-up](https://log.mkyu.one/posts/inscribe/inscripython/)
-
-
-
 <details>
 <summary><strong>Local assets & offline support</strong></summary>
 
@@ -91,9 +83,3 @@ python3 -m http.server
 ```
 
 </details>
-
-<details> <summary><strong>UI Screenshots</strong></summary>
-v2.0
-<p align="left"> <img src="https://log.mkyu.one/posts/inscribe/inscribe2.png" width="650"> </p>
-v1.0
-<p align="left"> <img src="https://log.mkyu.one/posts/inscribe/inscribeold.png" width="650"> </p> </details>
