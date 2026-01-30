@@ -4,7 +4,7 @@ Inscribe Editor is a lightweight, in-browser Python editor and executor powered 
 It’s designed to be minimal, fast, and distraction-free — ideal for learning, experimenting, or running quick Python snippets directly in your browser.
 
 > [!IMPORTANT]
-> Due to Pyodide’s in-browser runtime model, asynchronous Python features are not fully supported. Inscribe is best suited for simple synchronous scripts. Async support is not a current priority.
+> **Due to Pyodide’s in-browser runtime model, asynchronous Python features are not fully supported**. Inscribe is best suited for simple synchronous scripts. Async support is not a current priority.
 
 👉 **Try it online:** https://py.mkyu.one  
 👉 You can also host it yourself using GitHub Pages or any static host.
