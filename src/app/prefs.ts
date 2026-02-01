@@ -69,3 +69,9 @@ export function bindPrefsUI(
     onChange?.();
   });
 }
+
+export function resetPrefs(prefs: Prefs, editor: CodeMirrorEditor, dom: DomRefs) {
+  Object.assign(prefs, DEFAULT_PREFS);
+  savePrefs(prefs);
+  applyPrefs(prefs, editor, dom);
+}

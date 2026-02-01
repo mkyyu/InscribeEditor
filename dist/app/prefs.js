@@ -59,3 +59,8 @@ export function bindPrefsUI(prefs, editor, dom, onChange) {
         onChange === null || onChange === void 0 ? void 0 : onChange();
     });
 }
+export function resetPrefs(prefs, editor, dom) {
+    Object.assign(prefs, DEFAULT_PREFS);
+    savePrefs(prefs);
+    applyPrefs(prefs, editor, dom);
+}

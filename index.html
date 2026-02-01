@@ -280,13 +280,16 @@
       <div class="settingsHeader">
         <div>
           <h2 id="settingsTitle">Settings</h2>
-          <p class="settingsIntro">Quiet controls that improve long-session comfort. Stored locally in your browser.</p>
+          <p class="settingsIntro">Quiet controls that improve long-session comfort. Changes apply instantly and are saved locally.</p>
         </div>
       </div>
 
       <div class="settingsGrid">
-        <section class="settingsCard" aria-label="Preferences">
-          <div class="settingsCardTitle">Preferences</div>
+        <section class="settingsCard primary" aria-label="Preferences">
+          <div class="settingsCardTitle">
+            <span class="material-icons" aria-hidden="true">tune</span>
+            Preferences
+          </div>
 
           <div class="settingsSection">
             <div class="settingsSectionTitle">Font sizes</div>
@@ -318,7 +321,7 @@
           </div>
 
           <div class="settingsSection">
-            <div class="settingsSectionTitle">Runtime</div>
+            <div class="settingsSectionTitle">Execution</div>
             <div class="settingsRow">
               <label class="settingsLabel toggle" for="execTimeToggle">
                 <input id="execTimeToggle" type="checkbox" />
@@ -329,15 +332,25 @@
           </div>
         </section>
 
-        <section class="settingsCard" aria-label="Shortcuts">
-          <div class="settingsCardTitle">Shortcuts</div>
+        <section class="settingsCard muted" aria-label="Shortcuts">
+          <div class="settingsCardTitle">
+            <span class="material-icons" aria-hidden="true">keyboard</span>
+            Shortcuts
+          </div>
           <table class="shortcuts" aria-label="Keyboard shortcuts">
+            <thead>
+              <tr>
+                <th>Keys</th>
+                <th>Action</th>
+              </tr>
+            </thead>
             <tbody id="shortcutBody"></tbody>
           </table>
         </section>
       </div>
 
       <div class="modalRow">
+        <button class="toolBtn" id="resetPrefsBtn" type="button">Reset defaults</button>
         <button class="toolBtn" id="closeSettingsBtn" type="button">Close</button>
       </div>
     </div>

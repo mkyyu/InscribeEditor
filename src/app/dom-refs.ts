@@ -82,6 +82,7 @@ export type DomRefs = {
   consoleSizeLabel: HTMLSpanElement;
   wrapToggle: HTMLInputElement;
   execTimeToggle: HTMLInputElement;
+  resetPrefsBtn: HTMLButtonElement;
   shortcutBody: HTMLTableSectionElement;
   dynamicStyles: HTMLStyleElement;
 };
@@ -169,6 +170,7 @@ export function getDomRefs(): DomRefs {
     consoleSizeLabel: byId<HTMLSpanElement>("consoleSizeLabel"),
     wrapToggle: byId<HTMLInputElement>("wrapToggle"),
     execTimeToggle: byId<HTMLInputElement>("execTimeToggle"),
+    resetPrefsBtn: byId<HTMLButtonElement>("resetPrefsBtn"),
     shortcutBody: byId<HTMLTableSectionElement>("shortcutBody"),
     dynamicStyles: byId<HTMLStyleElement>("dynamicStyles")
   };

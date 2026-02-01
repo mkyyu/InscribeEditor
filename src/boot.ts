@@ -9,7 +9,7 @@ import { setupConsoleInput } from "./app/input.js";
 import { createPrintController, PrintController } from "./app/print.js";
 import { createPyodideController, PyodideController } from "./app/pyodide.js";
 import { registerServiceWorker } from "./app/pwa.js";
-import { loadPrefs, applyPrefs, savePrefs, bindPrefsUI } from "./app/prefs.js";
+import { loadPrefs, applyPrefs, savePrefs, bindPrefsUI, resetPrefs } from "./app/prefs.js";
 import { createShareController } from "./app/share.js";
 import { createInitialState } from "./app/state.js";
 import { setFilenameStatus, updateClock, updateCursorStatus, updateStatusBar } from "./app/status.js";
@@ -357,6 +357,10 @@ export async function boot() {
 
   bindPrefsUI(prefs, editorCtrl.editor, dom);
   applyPrefs(prefs, editorCtrl.editor, dom);
+  dom.resetPrefsBtn.addEventListener("click", () => {
+    resetPrefs(prefs, editorCtrl.editor, dom);
+    consoleApi.addLine("Settings reset to defaults.", { dim: true, system: true });
+  });
 
   ui.bindModalDismiss();
   ui.bindMenuDismiss();

@@ -82,6 +82,7 @@ export function getDomRefs() {
         consoleSizeLabel: byId("consoleSizeLabel"),
         wrapToggle: byId("wrapToggle"),
         execTimeToggle: byId("execTimeToggle"),
+        resetPrefsBtn: byId("resetPrefsBtn"),
         shortcutBody: byId("shortcutBody"),
         dynamicStyles: byId("dynamicStyles")
     };

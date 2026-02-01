@@ -878,6 +878,10 @@
   }
   .modalSettings{
     width:min(680px, 94vw);
+    max-height:calc(100vh - 120px);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
   }
   .modalSettings .settingsCardTitle{
     letter-spacing:0.08em;
@@ -923,6 +927,7 @@
     justify-content:space-between;
     gap:12px;
     margin-bottom:6px;
+    flex:0 0 auto;
   }
   .settingsIntro{
     font-size:13px;
@@ -933,12 +938,22 @@
     display:grid;
     grid-template-columns:1fr;
     gap:12px;
+    overflow:auto;
+    min-height:0;
+    padding-right:4px;
   }
   .settingsCard{
     border:1px solid rgba(15,23,42,0.10);
     background:rgba(15,23,42,0.03);
     border-radius:12px;
     padding:12px;
+  }
+  .settingsCard.primary{
+    border-color:rgba(37,99,235,0.18);
+    background:rgba(37,99,235,0.06);
+  }
+  .settingsCard.muted{
+    background:rgba(15,23,42,0.02);
   }
   .settingsCardTitle{
     font-size:11.5px;
@@ -947,6 +962,13 @@
     text-transform:uppercase;
     color:rgba(15,23,42,0.62);
     margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .settingsCardTitle .material-icons{
+    font-size:15px;
+    color:rgba(15,23,42,0.6);
   }
   .settingsSection{
     padding-top:8px;
@@ -1024,12 +1046,21 @@
     font-size:12.5px;
     color:rgba(15,23,42,0.62);
   }
+  .shortcuts thead th{
+    text-align:left;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:rgba(15,23,42,0.5);
+    padding-bottom:6px;
+  }
   .modalRow{
     display:flex;
     gap:10px;
     justify-content:flex-end;
     flex-wrap:wrap;
     margin-top:10px;
+    flex:0 0 auto;
   }
 
   .prefs{
