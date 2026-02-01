@@ -90,6 +90,21 @@ export async function boot() {
     showIsolationWarning();
   }
 
+  let sysToastTimer: ReturnType<typeof setTimeout> | null = null;
+  const showSystemToast = (title: string, desc: string, icon = "check_circle") => {
+    dom.sysToastTitle.textContent = title;
+    dom.sysToastDesc.textContent = desc;
+    dom.sysToastIcon.textContent = icon;
+    dom.sysToast.classList.add("show");
+    if (sysToastTimer) clearTimeout(sysToastTimer);
+    sysToastTimer = setTimeout(() => {
+      dom.sysToast.classList.remove("show");
+    }, 2400);
+  };
+  dom.sysToast.addEventListener("click", () => {
+    dom.sysToast.classList.remove("show");
+  });
+
   const consoleApi = createConsoleController(dom);
   consoleApi.attachStdoutHandlers();
 
@@ -202,7 +217,8 @@ export async function boot() {
     consoleApi.handleStdout,
     inputCtrl.requestInput,
     showIsolationWarning,
-    confirmAsyncioRun
+    confirmAsyncioRun,
+    () => showSystemToast("Pyodide ready", "You can run code now.")
   );
 
   const shareCtrl = createShareController(
@@ -357,6 +373,10 @@ export async function boot() {
   updateRunModeUI(state.runMode, dom);
   registerServiceWorker();
   refocusEditor();
+
+  setTimeout(() => {
+    pyodideCtrl.warmStart();
+  }, 250);
 
   setInterval(() => updateClock(dom), 1000);
 

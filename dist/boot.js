@@ -83,6 +83,21 @@ export async function boot() {
     if (!window.crossOriginIsolated) {
         showIsolationWarning();
     }
+    let sysToastTimer = null;
+    const showSystemToast = (title, desc, icon = "check_circle") => {
+        dom.sysToastTitle.textContent = title;
+        dom.sysToastDesc.textContent = desc;
+        dom.sysToastIcon.textContent = icon;
+        dom.sysToast.classList.add("show");
+        if (sysToastTimer)
+            clearTimeout(sysToastTimer);
+        sysToastTimer = setTimeout(() => {
+            dom.sysToast.classList.remove("show");
+        }, 2400);
+    };
+    dom.sysToast.addEventListener("click", () => {
+        dom.sysToast.classList.remove("show");
+    });
     const consoleApi = createConsoleController(dom);
     consoleApi.attachStdoutHandlers();
     const inputCtrl = setupConsoleInput(dom.consoleEl);
@@ -137,7 +152,7 @@ export async function boot() {
         dom.asyncWarnConfirmBtn.addEventListener("click", onConfirm);
         dom.asyncWarnOverlay.addEventListener("click", onBackdrop);
     });
-    pyodideCtrl = createPyodideController(state, consoleApi.addLine, () => updateStatusBar(state, dom), refocusEditor, editorCtrl.getCodeForMode, getRunModeLabel, dom.runBtn, dom.runModeBtn, prefs, consoleApi.resetStdoutBuffer, consoleApi.flushStdoutBuffer, consoleApi.handleStdout, inputCtrl.requestInput, showIsolationWarning, confirmAsyncioRun);
+    pyodideCtrl = createPyodideController(state, consoleApi.addLine, () => updateStatusBar(state, dom), refocusEditor, editorCtrl.getCodeForMode, getRunModeLabel, dom.runBtn, dom.runModeBtn, prefs, consoleApi.resetStdoutBuffer, consoleApi.flushStdoutBuffer, consoleApi.handleStdout, inputCtrl.requestInput, showIsolationWarning, confirmAsyncioRun, () => showSystemToast("Pyodide ready", "You can run code now."));
     const shareCtrl = createShareController(dom, () => editorCtrl.getValue(), consoleApi.addLine, () => fileCtrl.saveFile(), refocusEditor);
     fileCtrl.setFilename(safeLS.get(LS_KEYS.FILENAME) || "untitled.py");
     dom.aboutVersion.textContent = `v${APP_VERSION}`;
@@ -269,6 +284,9 @@ export async function boot() {
     updateRunModeUI(state.runMode, dom);
     registerServiceWorker();
     refocusEditor();
+    setTimeout(() => {
+        pyodideCtrl.warmStart();
+    }, 250);
     setInterval(() => updateClock(dom), 1000);
     if (loadingOverlay) {
         requestAnimationFrame(() => {

@@ -5,6 +5,7 @@ import { BUILD_TIME } from "../version.js";
 export type PyodideController = {
   runCode: (mode?: RunMode) => Promise<void>;
   resetEnvironment: () => void;
+  warmStart: () => void;
 };
 
 type WorkerInitMessage = {
@@ -56,7 +57,8 @@ export function createPyodideController(
   handleStdout: (text: string) => void,
   requestInput: (prompt?: string) => Promise<string>,
   showIsolationWarning: () => void,
-  confirmAsyncioRun: () => Promise<boolean>
+  confirmAsyncioRun: () => Promise<boolean>,
+  onReadyToast: () => void
 ): PyodideController {
   const inputMaxBytes = 64 * 1024;
   const supportsBlockingInput =
@@ -70,6 +72,7 @@ export function createPyodideController(
   let runStart = 0;
   let warnedIsolation = false;
   let warnedAsyncioRun = false;
+  let readyNotified = false;
 
   function setReady(ready: boolean) {
     state.pyodideReady = ready;
@@ -81,7 +84,7 @@ export function createPyodideController(
     worker.postMessage(message);
   }
 
-  function ensureWorker(): boolean {
+  function ensureWorker(opts: { silent?: boolean } = {}): boolean {
     if (worker) return true;
     if (!supportsBlockingInput) {
       if (!warnedIsolation) {
@@ -103,10 +106,12 @@ export function createPyodideController(
       return false;
     }
 
-    addConsoleLine("Loading Pyodide… This may take a moment on first run.", {
-      dim: true,
-      system: true
-    });
+    if (!opts.silent) {
+      addConsoleLine("Loading Pyodide… This may take a moment on first run.", {
+        dim: true,
+        system: true
+      });
+    }
     setReady(false);
 
     stdinSab = new SharedArrayBuffer(8 + inputMaxBytes);
@@ -154,6 +159,10 @@ export function createPyodideController(
     switch (message.type) {
       case "ready":
         setReady(true);
+        if (!readyNotified) {
+          onReadyToast();
+          readyNotified = true;
+        }
         addConsoleLine("Inscribe Editor & Execution with Pyodide", {
           dim: true,
           system: true
@@ -276,5 +285,9 @@ export function createPyodideController(
     }
   }
 
-  return { runCode, resetEnvironment };
+  function warmStart() {
+    ensureWorker({ silent: true });
+  }
+
+  return { runCode, resetEnvironment, warmStart };
 }

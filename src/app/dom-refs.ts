@@ -56,6 +56,10 @@ export type DomRefs = {
   shareToastTitle: HTMLDivElement;
   shareToastDesc: HTMLDivElement;
   shareToastIcon: HTMLSpanElement;
+  sysToast: HTMLDivElement;
+  sysToastTitle: HTMLDivElement;
+  sysToastDesc: HTMLDivElement;
+  sysToastIcon: HTMLSpanElement;
   fileMeta: HTMLSpanElement;
   sbRun: HTMLSpanElement;
   sbDirty: HTMLSpanElement;
@@ -138,6 +142,10 @@ export function getDomRefs(): DomRefs {
     shareToastTitle: byId<HTMLDivElement>("shareToastTitle"),
     shareToastDesc: byId<HTMLDivElement>("shareToastDesc"),
     shareToastIcon: byId<HTMLSpanElement>("shareToastIcon"),
+    sysToast: byId<HTMLDivElement>("sysToast"),
+    sysToastTitle: byId<HTMLDivElement>("sysToastTitle"),
+    sysToastDesc: byId<HTMLDivElement>("sysToastDesc"),
+    sysToastIcon: byId<HTMLSpanElement>("sysToastIcon"),
     fileMeta: byId<HTMLSpanElement>("fileMeta"),
     sbRun: byId<HTMLSpanElement>("sbRun"),
     sbDirty: byId<HTMLSpanElement>("sbDirty"),

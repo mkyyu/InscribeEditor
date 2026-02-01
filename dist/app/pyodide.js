@@ -1,6 +1,6 @@
 import { formatDuration } from "../utils/time.js";
 import { BUILD_TIME } from "../version.js";
-export function createPyodideController(state, addConsoleLine, updateStatusBar, refocusEditor, getCodeForMode, getRunModeLabel, runBtn, runModeBtn, prefs, resetStdoutBuffer, flushStdoutBuffer, handleStdout, requestInput, showIsolationWarning, confirmAsyncioRun) {
+export function createPyodideController(state, addConsoleLine, updateStatusBar, refocusEditor, getCodeForMode, getRunModeLabel, runBtn, runModeBtn, prefs, resetStdoutBuffer, flushStdoutBuffer, handleStdout, requestInput, showIsolationWarning, confirmAsyncioRun, onReadyToast) {
     const inputMaxBytes = 64 * 1024;
     const supportsBlockingInput = typeof SharedArrayBuffer !== "undefined" && window.crossOriginIsolated === true;
     let worker = null;
@@ -11,6 +11,7 @@ export function createPyodideController(state, addConsoleLine, updateStatusBar, 
     let runStart = 0;
     let warnedIsolation = false;
     let warnedAsyncioRun = false;
+    let readyNotified = false;
     function setReady(ready) {
         state.pyodideReady = ready;
         updateStatusBar();
@@ -20,7 +21,7 @@ export function createPyodideController(state, addConsoleLine, updateStatusBar, 
             return;
         worker.postMessage(message);
     }
-    function ensureWorker() {
+    function ensureWorker(opts = {}) {
         if (worker)
             return true;
         if (!supportsBlockingInput) {
@@ -36,10 +37,12 @@ export function createPyodideController(state, addConsoleLine, updateStatusBar, 
             showIsolationWarning();
             return false;
         }
-        addConsoleLine("Loading Pyodide… This may take a moment on first run.", {
-            dim: true,
-            system: true
-        });
+        if (!opts.silent) {
+            addConsoleLine("Loading Pyodide… This may take a moment on first run.", {
+                dim: true,
+                system: true
+            });
+        }
         setReady(false);
         stdinSab = new SharedArrayBuffer(8 + inputMaxBytes);
         stdinI32 = new Int32Array(stdinSab, 0, 2);
@@ -81,6 +84,10 @@ export function createPyodideController(state, addConsoleLine, updateStatusBar, 
         switch (message.type) {
             case "ready":
                 setReady(true);
+                if (!readyNotified) {
+                    onReadyToast();
+                    readyNotified = true;
+                }
                 addConsoleLine("Inscribe Editor & Execution with Pyodide", {
                     dim: true,
                     system: true
@@ -199,5 +206,8 @@ export function createPyodideController(state, addConsoleLine, updateStatusBar, 
             refocusEditor();
         }
     }
-    return { runCode, resetEnvironment };
+    function warmStart() {
+        ensureWorker({ silent: true });
+    }
+    return { runCode, resetEnvironment, warmStart };
 }
