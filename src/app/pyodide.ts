@@ -55,7 +55,7 @@ export function createPyodideController(
   getRunModeLabel: (mode: RunMode) => string,
   runBtn: HTMLButtonElement,
   runModeBtn: HTMLButtonElement,
-  stopBtn: HTMLButtonElement,
+  runGroup: HTMLDivElement,
   prefs: { showExecTime: boolean },
   resetStdoutBuffer: () => void,
   flushStdoutBuffer: () => void,
@@ -83,6 +83,32 @@ export function createPyodideController(
   let warnedAsyncioRun = false;
   let readyNotified = false;
   let interruptedRun = false;
+
+  const runIcon = runBtn.querySelector(".material-icons") as HTMLSpanElement | null;
+  const runLabelEl = runBtn.querySelector("#runLabel") as HTMLSpanElement | null;
+  const hintRunEl = runBtn.querySelector("#hintRun") as HTMLSpanElement | null;
+
+  function setRunButtonState(running: boolean) {
+    if (running) {
+      runGroup.classList.add("running");
+      runBtn.classList.remove("primary");
+      runBtn.classList.add("danger");
+      if (runIcon) runIcon.textContent = "stop_circle";
+      if (runLabelEl) runLabelEl.textContent = "Stop";
+      if (hintRunEl) hintRunEl.style.display = "none";
+      runBtn.title = "Stop execution";
+      runBtn.setAttribute("aria-label", "Stop execution");
+    } else {
+      runGroup.classList.remove("running");
+      runBtn.classList.add("primary");
+      runBtn.classList.remove("danger");
+      if (runIcon) runIcon.textContent = "play_arrow";
+      if (runLabelEl) runLabelEl.textContent = `Run ${getRunModeLabel(state.runMode)}`;
+      if (hintRunEl) hintRunEl.style.display = "";
+      runBtn.title = `Run ${getRunModeLabel(state.runMode)} (Cmd/Ctrl + Enter)`;
+      runBtn.setAttribute("aria-label", "Run code");
+    }
+  }
 
   function setReady(ready: boolean) {
     state.pyodideReady = ready;
@@ -243,9 +269,9 @@ export function createPyodideController(
     state.isRunning = true;
     updateStatusBar();
 
-    runBtn.disabled = true;
+    runBtn.disabled = false;
     runModeBtn.disabled = true;
-    stopBtn.disabled = false;
+    setRunButtonState(true);
     resetStdoutBuffer();
 
     try {
@@ -306,7 +332,7 @@ export function createPyodideController(
       updateStatusBar();
       runBtn.disabled = false;
       runModeBtn.disabled = false;
-      stopBtn.disabled = true;
+      setRunButtonState(false);
       if (interruptI32) {
         Atomics.store(interruptI32, 0, 0);
       }

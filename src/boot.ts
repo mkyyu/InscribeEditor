@@ -143,6 +143,10 @@ export async function boot() {
   let pyodideCtrl: PyodideController;
 
   const runDefault = () => {
+    if (state.isRunning) {
+      pyodideCtrl.stopExecution();
+      return;
+    }
     void pyodideCtrl.runCode(state.runMode);
   };
   const runCell = () => {
@@ -211,7 +215,7 @@ export async function boot() {
     getRunModeLabel,
     dom.runBtn,
     dom.runModeBtn,
-    dom.stopBtn,
+    dom.runGroup,
     prefs,
     consoleApi.resetStdoutBuffer,
     consoleApi.flushStdoutBuffer,
@@ -264,9 +268,6 @@ export async function boot() {
 
   dom.runBtn.addEventListener("click", runDefault);
   dom.runModeBtn.addEventListener("click", ui.toggleRunMenu);
-  dom.stopBtn.addEventListener("click", () => {
-    pyodideCtrl.stopExecution();
-  });
 
   dom.runAllBtn.addEventListener("click", () => {
     setRunMode("all", dom, (next) => {

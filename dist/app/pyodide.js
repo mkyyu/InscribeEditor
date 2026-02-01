@@ -1,6 +1,6 @@
 import { formatDuration } from "../utils/time.js";
 import { BUILD_TIME } from "../version.js";
-export function createPyodideController(state, addConsoleLine, updateStatusBar, refocusEditor, getCodeForMode, getRunModeLabel, runBtn, runModeBtn, stopBtn, prefs, resetStdoutBuffer, flushStdoutBuffer, handleStdout, requestInput, cancelActiveInput, showIsolationWarning, confirmAsyncioRun, onReadyToast) {
+export function createPyodideController(state, addConsoleLine, updateStatusBar, refocusEditor, getCodeForMode, getRunModeLabel, runBtn, runModeBtn, runGroup, prefs, resetStdoutBuffer, flushStdoutBuffer, handleStdout, requestInput, cancelActiveInput, showIsolationWarning, confirmAsyncioRun, onReadyToast) {
     const inputMaxBytes = 64 * 1024;
     const supportsBlockingInput = typeof SharedArrayBuffer !== "undefined" && window.crossOriginIsolated === true;
     let worker = null;
@@ -16,6 +16,37 @@ export function createPyodideController(state, addConsoleLine, updateStatusBar, 
     let warnedAsyncioRun = false;
     let readyNotified = false;
     let interruptedRun = false;
+    const runIcon = runBtn.querySelector(".material-icons");
+    const runLabelEl = runBtn.querySelector("#runLabel");
+    const hintRunEl = runBtn.querySelector("#hintRun");
+    function setRunButtonState(running) {
+        if (running) {
+            runGroup.classList.add("running");
+            runBtn.classList.remove("primary");
+            runBtn.classList.add("danger");
+            if (runIcon)
+                runIcon.textContent = "stop_circle";
+            if (runLabelEl)
+                runLabelEl.textContent = "Stop";
+            if (hintRunEl)
+                hintRunEl.style.display = "none";
+            runBtn.title = "Stop execution";
+            runBtn.setAttribute("aria-label", "Stop execution");
+        }
+        else {
+            runGroup.classList.remove("running");
+            runBtn.classList.add("primary");
+            runBtn.classList.remove("danger");
+            if (runIcon)
+                runIcon.textContent = "play_arrow";
+            if (runLabelEl)
+                runLabelEl.textContent = `Run ${getRunModeLabel(state.runMode)}`;
+            if (hintRunEl)
+                hintRunEl.style.display = "";
+            runBtn.title = `Run ${getRunModeLabel(state.runMode)} (Cmd/Ctrl + Enter)`;
+            runBtn.setAttribute("aria-label", "Run code");
+        }
+    }
     function setReady(ready) {
         state.pyodideReady = ready;
         updateStatusBar();
@@ -162,9 +193,9 @@ export function createPyodideController(state, addConsoleLine, updateStatusBar, 
             return;
         state.isRunning = true;
         updateStatusBar();
-        runBtn.disabled = true;
+        runBtn.disabled = false;
         runModeBtn.disabled = true;
-        stopBtn.disabled = false;
+        setRunButtonState(true);
         resetStdoutBuffer();
         try {
             const code = getCodeForMode(mode);
@@ -222,7 +253,7 @@ export function createPyodideController(state, addConsoleLine, updateStatusBar, 
             updateStatusBar();
             runBtn.disabled = false;
             runModeBtn.disabled = false;
-            stopBtn.disabled = true;
+            setRunButtonState(false);
             if (interruptI32) {
                 Atomics.store(interruptI32, 0, 0);
             }

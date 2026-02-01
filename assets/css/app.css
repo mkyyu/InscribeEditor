@@ -297,6 +297,12 @@
     border-bottom-left-radius:0;
     border-left:1px solid rgba(255,255,255,0.18);
   }
+  .runGroup.running #runModeBtn{
+    display:none;
+  }
+  .runGroup.running #runBtn{
+    border-radius:var(--radiusSm);
+  }
 
   /* Run meta: keep ONLY shortcut pill */
   .runMeta{
