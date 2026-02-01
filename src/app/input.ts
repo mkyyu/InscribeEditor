@@ -5,11 +5,13 @@ type InputRequest = {
 
 export type ConsoleInputController = {
   requestInput: (prompt?: string) => Promise<string>;
+  cancelActiveInput: () => void;
 };
 
 export function setupConsoleInput(consoleEl: HTMLDivElement): ConsoleInputController {
   const inputQueue: InputRequest[] = [];
   let activeInput: InputRequest | null = null;
+  let cancelActive: (() => void) | null = null;
 
   function showNextInput() {
     const next = inputQueue.shift();
@@ -54,8 +56,10 @@ export function setupConsoleInput(consoleEl: HTMLDivElement): ConsoleInputContro
       line.appendChild(echo);
       next.resolve(value);
       activeInput = null;
+      cancelActive = null;
       showNextInput();
     };
+    cancelActive = () => commit("");
 
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
@@ -79,7 +83,11 @@ export function setupConsoleInput(consoleEl: HTMLDivElement): ConsoleInputContro
   (window as any).__inscribeReadline = (prompt?: string) =>
     requestConsoleInput(prompt ? String(prompt) : "");
 
-  return { requestInput: requestConsoleInput };
+  function cancelActiveInput() {
+    if (cancelActive) cancelActive();
+  }
+
+  return { requestInput: requestConsoleInput, cancelActiveInput };
 }
 
 export function rewriteInputCalls(source: string) {

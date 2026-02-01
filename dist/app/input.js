@@ -1,6 +1,7 @@
 export function setupConsoleInput(consoleEl) {
     const inputQueue = [];
     let activeInput = null;
+    let cancelActive = null;
     function showNextInput() {
         var _a;
         const next = inputQueue.shift();
@@ -39,8 +40,10 @@ export function setupConsoleInput(consoleEl) {
             line.appendChild(echo);
             next.resolve(value);
             activeInput = null;
+            cancelActive = null;
             showNextInput();
         };
+        cancelActive = () => commit("");
         input.addEventListener("keydown", (e) => {
             var _a;
             if (e.key === "Enter") {
@@ -61,7 +64,11 @@ export function setupConsoleInput(consoleEl) {
         });
     }
     window.__inscribeReadline = (prompt) => requestConsoleInput(prompt ? String(prompt) : "");
-    return { requestInput: requestConsoleInput };
+    function cancelActiveInput() {
+        if (cancelActive)
+            cancelActive();
+    }
+    return { requestInput: requestConsoleInput, cancelActiveInput };
 }
 export function rewriteInputCalls(source) {
     const isIdentChar = (ch) => /[A-Za-z0-9_]/.test(ch);

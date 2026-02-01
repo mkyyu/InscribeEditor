@@ -211,11 +211,13 @@ export async function boot() {
     getRunModeLabel,
     dom.runBtn,
     dom.runModeBtn,
+    dom.stopBtn,
     prefs,
     consoleApi.resetStdoutBuffer,
     consoleApi.flushStdoutBuffer,
     consoleApi.handleStdout,
     inputCtrl.requestInput,
+    inputCtrl.cancelActiveInput,
     showIsolationWarning,
     confirmAsyncioRun,
     () => showSystemToast("Pyodide ready", "You can run code now.")
@@ -262,6 +264,9 @@ export async function boot() {
 
   dom.runBtn.addEventListener("click", runDefault);
   dom.runModeBtn.addEventListener("click", ui.toggleRunMenu);
+  dom.stopBtn.addEventListener("click", () => {
+    pyodideCtrl.stopExecution();
+  });
 
   dom.runAllBtn.addEventListener("click", () => {
     setRunMode("all", dom, (next) => {

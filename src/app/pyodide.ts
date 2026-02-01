@@ -6,12 +6,14 @@ export type PyodideController = {
   runCode: (mode?: RunMode) => Promise<void>;
   resetEnvironment: () => void;
   warmStart: () => void;
+  stopExecution: () => void;
 };
 
 type WorkerInitMessage = {
   type: "init";
   stdinSab: SharedArrayBuffer;
   stdinMaxBytes: number;
+  interruptSab: SharedArrayBuffer;
 };
 
 type WorkerRunMessage = {
@@ -32,6 +34,7 @@ type WorkerStdoutFlushMessage = { type: "stdout-flush" };
 type WorkerInputRequestMessage = { type: "input"; prompt: string };
 type WorkerErrorLineMessage = { type: "error-line"; text: string };
 type WorkerRunCompleteMessage = { type: "run-complete"; ok: boolean };
+type WorkerInterruptedMessage = { type: "interrupted" };
 
 type WorkerInboundMessage =
   | WorkerReadyMessage
@@ -40,7 +43,8 @@ type WorkerInboundMessage =
   | WorkerStdoutFlushMessage
   | WorkerInputRequestMessage
   | WorkerErrorLineMessage
-  | WorkerRunCompleteMessage;
+  | WorkerRunCompleteMessage
+  | WorkerInterruptedMessage;
 
 export function createPyodideController(
   state: AppState,
@@ -51,11 +55,13 @@ export function createPyodideController(
   getRunModeLabel: (mode: RunMode) => string,
   runBtn: HTMLButtonElement,
   runModeBtn: HTMLButtonElement,
+  stopBtn: HTMLButtonElement,
   prefs: { showExecTime: boolean },
   resetStdoutBuffer: () => void,
   flushStdoutBuffer: () => void,
   handleStdout: (text: string) => void,
   requestInput: (prompt?: string) => Promise<string>,
+  cancelActiveInput: () => void,
   showIsolationWarning: () => void,
   confirmAsyncioRun: () => Promise<boolean>,
   onReadyToast: () => void
@@ -68,11 +74,15 @@ export function createPyodideController(
   let stdinSab: SharedArrayBuffer | null = null;
   let stdinI32: Int32Array | null = null;
   let stdinU8: Uint8Array | null = null;
+  let interruptSab: SharedArrayBuffer | null = null;
+  let interruptI32: Int32Array | null = null;
   let runResolve: ((ok: boolean) => void) | null = null;
+  let runCompletionPromise: Promise<boolean> | null = null;
   let runStart = 0;
   let warnedIsolation = false;
   let warnedAsyncioRun = false;
   let readyNotified = false;
+  let interruptedRun = false;
 
   function setReady(ready: boolean) {
     state.pyodideReady = ready;
@@ -117,6 +127,8 @@ export function createPyodideController(
     stdinSab = new SharedArrayBuffer(8 + inputMaxBytes);
     stdinI32 = new Int32Array(stdinSab, 0, 2);
     stdinU8 = new Uint8Array(stdinSab, 8);
+    interruptSab = new SharedArrayBuffer(4);
+    interruptI32 = new Int32Array(interruptSab);
 
     const workerUrl = `dist/worker/pyodide-worker.js?v=${encodeURIComponent(BUILD_TIME)}`;
     worker = new Worker(workerUrl);
@@ -131,7 +143,8 @@ export function createPyodideController(
     const initMessage: WorkerInitMessage = {
       type: "init",
       stdinSab,
-      stdinMaxBytes: inputMaxBytes
+      stdinMaxBytes: inputMaxBytes,
+      interruptSab
     };
     postToWorker(initMessage);
     return true;
@@ -185,6 +198,10 @@ export function createPyodideController(
       case "error-line":
         if (message.text.trim()) addConsoleLine(message.text, { error: true });
         break;
+      case "interrupted":
+        addConsoleLine("Execution interrupted.", { dim: true, system: true });
+        interruptedRun = true;
+        break;
       case "input":
         void handleInputRequest(message.prompt);
         break;
@@ -193,6 +210,7 @@ export function createPyodideController(
           runResolve(message.ok);
           runResolve = null;
         }
+        runCompletionPromise = null;
         break;
       default:
         break;
@@ -208,6 +226,8 @@ export function createPyodideController(
     stdinSab = null;
     stdinI32 = null;
     stdinU8 = null;
+    interruptSab = null;
+    interruptI32 = null;
     resetStdoutBuffer();
     setReady(false);
     addConsoleLine("Environment reset. Next run will reload Pyodide.", {
@@ -225,6 +245,7 @@ export function createPyodideController(
 
     runBtn.disabled = true;
     runModeBtn.disabled = true;
+    stopBtn.disabled = false;
     resetStdoutBuffer();
 
     try {
@@ -253,21 +274,24 @@ export function createPyodideController(
       });
 
       runStart = performance.now();
-      const runPromise = new Promise<boolean>((resolve) => {
+      if (interruptI32) {
+        Atomics.store(interruptI32, 0, 0);
+      }
+      runCompletionPromise = new Promise<boolean>((resolve) => {
         runResolve = resolve;
       });
 
       const runMessage: WorkerRunMessage = { type: "run", code };
       postToWorker(runMessage);
 
-      const ok = await runPromise;
+      const ok = await runCompletionPromise;
       flushStdoutBuffer();
 
       const dt = performance.now() - runStart;
       if (prefs.showExecTime) {
         addConsoleLine(`Finished in ${formatDuration(dt)}.`, { dim: true, system: true });
       }
-      if (!ok) {
+      if (!ok && !interruptedRun) {
         addConsoleLine("Finished with errors.", { dim: true, system: true });
       }
     } catch (err) {
@@ -277,17 +301,70 @@ export function createPyodideController(
       });
       addConsoleLine("Finished with errors.", { dim: true, system: true });
     } finally {
+      interruptedRun = false;
       state.isRunning = false;
       updateStatusBar();
       runBtn.disabled = false;
       runModeBtn.disabled = false;
+      stopBtn.disabled = true;
+      if (interruptI32) {
+        Atomics.store(interruptI32, 0, 0);
+      }
       refocusEditor();
     }
+  }
+
+  async function stopExecution() {
+    if (!state.isRunning) return;
+
+    const waitForCompletion = async (timeoutMs: number) => {
+      if (!runCompletionPromise) return true;
+      const timeout = new Promise<boolean>((resolve) =>
+        setTimeout(() => resolve(false), timeoutMs)
+      );
+      return Promise.race([runCompletionPromise.then(() => true), timeout]);
+    };
+
+    if (stdinI32 && Atomics.load(stdinI32, 0) === 1) {
+      cancelActiveInput();
+      stdinI32[1] = -1;
+      Atomics.store(stdinI32, 0, 2);
+      Atomics.notify(stdinI32, 0, 1);
+    }
+
+    if (await waitForCompletion(300)) return;
+
+    if (interruptI32) {
+      Atomics.store(interruptI32, 0, 2);
+      Atomics.notify(interruptI32, 0, 1);
+    }
+
+    if (await waitForCompletion(600)) return;
+
+    addConsoleLine("Force-stopping execution and resetting environment.", {
+      dim: true,
+      system: true
+    });
+    if (worker) {
+      worker.terminate();
+      worker = null;
+    }
+    if (runResolve) {
+      runResolve(false);
+      runResolve = null;
+    }
+    runCompletionPromise = null;
+    stdinSab = null;
+    stdinI32 = null;
+    stdinU8 = null;
+    interruptSab = null;
+    interruptI32 = null;
+    setReady(false);
   }
 
   function warmStart() {
     ensureWorker({ silent: true });
   }
 
-  return { runCode, resetEnvironment, warmStart };
+  return { runCode, resetEnvironment, warmStart, stopExecution };
 }

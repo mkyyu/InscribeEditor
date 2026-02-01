@@ -262,6 +262,16 @@
     background:#1f55cf;
   }
 
+  .toolBtn.danger{
+    color:var(--danger);
+    border-color:rgba(180,35,24,0.22);
+    background:rgba(180,35,24,0.04);
+  }
+  .toolBtn.danger:hover{
+    box-shadow:var(--shadowHover);
+    background:var(--dangerSoft);
+  }
+
   .toolBtn:disabled{
     opacity:0.55;
     cursor:not-allowed;

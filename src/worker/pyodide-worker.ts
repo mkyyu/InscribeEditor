@@ -4,7 +4,7 @@ type WorkerGlobal = DedicatedWorkerGlobalScope & {
   loadPyodide?: () => Promise<any>;
   inscribeStdout?: (text?: string) => void;
   inscribeStdoutFlush?: () => void;
-  __inscribeReadline?: (prompt?: string) => string;
+  __inscribeReadline?: (prompt?: string) => string | null;
 };
 
 const ctx = self as WorkerGlobal;
@@ -13,6 +13,7 @@ type InitMessage = {
   type: "init";
   stdinSab: SharedArrayBuffer;
   stdinMaxBytes: number;
+  interruptSab: SharedArrayBuffer;
 };
 
 type RunMessage = {
@@ -27,6 +28,7 @@ type InboundMessage = InitMessage | RunMessage | ResetMessage;
 let pyodide: any = null;
 let stdinI32: Int32Array | null = null;
 let stdinU8: Uint8Array | null = null;
+let interruptI32: Int32Array | null = null;
 
 const textDecoder = new TextDecoder();
 
@@ -37,6 +39,10 @@ function post(type: string, payload: Record<string, unknown> = {}) {
 function setupStdin(sab: SharedArrayBuffer, maxBytes: number) {
   stdinI32 = new Int32Array(sab, 0, 2);
   stdinU8 = new Uint8Array(sab, 8, maxBytes);
+}
+
+function setupInterrupt(sab: SharedArrayBuffer) {
+  interruptI32 = new Int32Array(sab);
 }
 
 function readLine(prompt?: string) {
@@ -50,7 +56,13 @@ function readLine(prompt?: string) {
   post("input", { prompt: prompt ? String(prompt) : "" });
   Atomics.wait(stdinI32, 0, 1);
 
-  const length = Math.max(0, Math.min(stdinI32[1], stdinU8.length));
+  const rawLength = stdinI32[1];
+  if (rawLength < 0) {
+    stdinI32[1] = 0;
+    Atomics.store(stdinI32, 0, 0);
+    return null;
+  }
+  const length = Math.max(0, Math.min(rawLength, stdinU8.length));
   const copy = new Uint8Array(length);
   if (length > 0) {
     copy.set(stdinU8.subarray(0, length));
@@ -72,6 +84,10 @@ async function ensurePyodide() {
   }
 
   pyodide = await ctx.loadPyodide();
+
+  if (interruptI32 && typeof pyodide.setInterruptBuffer === "function") {
+    pyodide.setInterruptBuffer(interruptI32);
+  }
 
   ctx.inscribeStdout = (text?: string) => {
     post("stdout", { text: String(text ?? "") });
@@ -95,8 +111,11 @@ class JSConsole:
 sys.stdout = JSConsole()
 sys.stderr = JSConsole()
 
-def custom_input(prompt=""):
-    return js.__inscribeReadline(prompt)
+  def custom_input(prompt=""):
+    val = js.__inscribeReadline(prompt)
+    if val is None:
+        raise KeyboardInterrupt("Execution interrupted")
+    return val
 builtins.input = custom_input
   `);
 }
@@ -106,6 +125,7 @@ ctx.onmessage = async (event: MessageEvent<InboundMessage>) => {
   try {
     if (message.type === "init") {
       setupStdin(message.stdinSab, message.stdinMaxBytes);
+      setupInterrupt(message.interruptSab);
       await ensurePyodide();
       post("ready");
       return;
@@ -124,9 +144,13 @@ ctx.onmessage = async (event: MessageEvent<InboundMessage>) => {
         post("run-complete", { ok: true });
       } catch (err) {
         const msg = err?.toString?.() ?? String(err);
-        msg.split("\\n").forEach((line: string) => {
-          if (line.trim()) post("error-line", { text: line });
-        });
+        if (msg.includes("KeyboardInterrupt")) {
+          post("interrupted");
+        } else {
+          msg.split("\\n").forEach((line: string) => {
+            if (line.trim()) post("error-line", { text: line });
+          });
+        }
         post("run-complete", { ok: false });
       }
       return;

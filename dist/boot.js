@@ -152,7 +152,7 @@ export async function boot() {
         dom.asyncWarnConfirmBtn.addEventListener("click", onConfirm);
         dom.asyncWarnOverlay.addEventListener("click", onBackdrop);
     });
-    pyodideCtrl = createPyodideController(state, consoleApi.addLine, () => updateStatusBar(state, dom), refocusEditor, editorCtrl.getCodeForMode, getRunModeLabel, dom.runBtn, dom.runModeBtn, prefs, consoleApi.resetStdoutBuffer, consoleApi.flushStdoutBuffer, consoleApi.handleStdout, inputCtrl.requestInput, showIsolationWarning, confirmAsyncioRun, () => showSystemToast("Pyodide ready", "You can run code now."));
+    pyodideCtrl = createPyodideController(state, consoleApi.addLine, () => updateStatusBar(state, dom), refocusEditor, editorCtrl.getCodeForMode, getRunModeLabel, dom.runBtn, dom.runModeBtn, dom.stopBtn, prefs, consoleApi.resetStdoutBuffer, consoleApi.flushStdoutBuffer, consoleApi.handleStdout, inputCtrl.requestInput, inputCtrl.cancelActiveInput, showIsolationWarning, confirmAsyncioRun, () => showSystemToast("Pyodide ready", "You can run code now."));
     const shareCtrl = createShareController(dom, () => editorCtrl.getValue(), consoleApi.addLine, () => fileCtrl.saveFile(), refocusEditor);
     fileCtrl.setFilename(safeLS.get(LS_KEYS.FILENAME) || "untitled.py");
     dom.aboutVersion.textContent = `v${APP_VERSION}`;
@@ -185,6 +185,9 @@ export async function boot() {
     }
     dom.runBtn.addEventListener("click", runDefault);
     dom.runModeBtn.addEventListener("click", ui.toggleRunMenu);
+    dom.stopBtn.addEventListener("click", () => {
+        pyodideCtrl.stopExecution();
+    });
     dom.runAllBtn.addEventListener("click", () => {
         setRunMode("all", dom, (next) => {
             state.runMode = next;

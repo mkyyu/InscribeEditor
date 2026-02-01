@@ -3,6 +3,7 @@ import { byId } from "../utils/dom.js";
 export type DomRefs = {
   runBtn: HTMLButtonElement;
   runModeBtn: HTMLButtonElement;
+  stopBtn: HTMLButtonElement;
   runMenu: HTMLDivElement;
   runAllBtn: HTMLButtonElement;
   runSelBtn: HTMLButtonElement;
@@ -89,6 +90,7 @@ export function getDomRefs(): DomRefs {
   return {
     runBtn: byId<HTMLButtonElement>("runBtn"),
     runModeBtn: byId<HTMLButtonElement>("runModeBtn"),
+    stopBtn: byId<HTMLButtonElement>("stopBtn"),
     runMenu: byId<HTMLDivElement>("runMenu"),
     runAllBtn: byId<HTMLButtonElement>("runAllBtn"),
     runSelBtn: byId<HTMLButtonElement>("runSelBtn"),

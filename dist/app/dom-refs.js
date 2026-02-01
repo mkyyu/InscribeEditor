@@ -3,6 +3,7 @@ export function getDomRefs() {
     return {
         runBtn: byId("runBtn"),
         runModeBtn: byId("runModeBtn"),
+        stopBtn: byId("stopBtn"),
         runMenu: byId("runMenu"),
         runAllBtn: byId("runAllBtn"),
         runSelBtn: byId("runSelBtn"),
