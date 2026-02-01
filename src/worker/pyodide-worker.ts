@@ -29,6 +29,7 @@ let pyodide: any = null;
 let stdinI32: Int32Array | null = null;
 let stdinU8: Uint8Array | null = null;
 let interruptI32: Int32Array | null = null;
+let mainGlobals: any = null;
 
 const textDecoder = new TextDecoder();
 
@@ -84,6 +85,7 @@ async function ensurePyodide() {
   }
 
   pyodide = await ctx.loadPyodide();
+  mainGlobals = pyodide.globals ?? null;
 
   if (interruptI32 && typeof pyodide.setInterruptBuffer === "function") {
     pyodide.setInterruptBuffer(interruptI32);
@@ -111,7 +113,7 @@ class JSConsole:
 sys.stdout = JSConsole()
 sys.stderr = JSConsole()
 
-  def custom_input(prompt=""):
+def custom_input(prompt=""):
     val = js.__inscribeReadline(prompt)
     if val is None:
         raise KeyboardInterrupt("Execution interrupted")
@@ -119,6 +121,25 @@ sys.stderr = JSConsole()
 builtins.input = custom_input
   `);
 }
+
+const BUILTIN_GUARD_CODE = `
+import builtins as _bi
+_COMMON_BUILTINS = ["input","print","list","str","int","len","sum","max","min","type"]
+_shadowed = [
+    name
+    for name in _bi.__dict__.keys()
+    if not name.startswith("__")
+    and name in globals()
+    and globals()[name] is not _bi.__dict__[name]
+]
+_name = None
+if _shadowed:
+    _bi.print("Warning: overwritten built-ins detected (" + ", ".join(_shadowed) + ").")
+    for _name in _COMMON_BUILTINS:
+        globals()[_name] = getattr(_bi, _name)
+    _bi.print("Some built-ins were reset. Avoid reusing names like input, list, str.")
+del _shadowed, _name, _COMMON_BUILTINS, _bi
+`;
 
 ctx.onmessage = async (event: MessageEvent<InboundMessage>) => {
   const message = event.data;
@@ -140,7 +161,13 @@ ctx.onmessage = async (event: MessageEvent<InboundMessage>) => {
     if (message.type === "run") {
       await ensurePyodide();
       try {
-        await pyodide.runPythonAsync(message.code);
+        if (mainGlobals) {
+          pyodide.runPython(BUILTIN_GUARD_CODE, { globals: mainGlobals });
+          await pyodide.runPythonAsync(message.code, { globals: mainGlobals });
+        } else {
+          pyodide.runPython(BUILTIN_GUARD_CODE);
+          await pyodide.runPythonAsync(message.code);
+        }
         post("run-complete", { ok: true });
       } catch (err) {
         const msg = err?.toString?.() ?? String(err);

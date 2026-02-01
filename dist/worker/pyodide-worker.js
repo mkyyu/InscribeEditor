@@ -88,7 +88,13 @@ builtins.input = custom_input
 const BUILTIN_GUARD_CODE = `
 import builtins as _bi
 _COMMON_BUILTINS = ["input","print","list","str","int","len","sum","max","min","type"]
-_shadowed = [name for name in dir(_bi) if name in globals() and globals()[name] is not getattr(_bi, name)]
+_shadowed = [
+    name
+    for name in _bi.__dict__.keys()
+    if not name.startswith("__")
+    and name in globals()
+    and globals()[name] is not _bi.__dict__[name]
+]
 _name = None
 if _shadowed:
     _bi.print("Warning: overwritten built-ins detected (" + ", ".join(_shadowed) + ").")
