@@ -48,6 +48,10 @@ export type DomRefs = {
   shareWarnCancelBtn: HTMLButtonElement;
   shareWarnDownloadBtn: HTMLButtonElement;
   shareWarnConfirmBtn: HTMLButtonElement;
+  asyncWarnOverlay: HTMLDivElement;
+  asyncWarnText: HTMLDivElement;
+  asyncWarnCancelBtn: HTMLButtonElement;
+  asyncWarnConfirmBtn: HTMLButtonElement;
   shareToast: HTMLDivElement;
   shareToastTitle: HTMLDivElement;
   shareToastDesc: HTMLDivElement;
@@ -65,6 +69,8 @@ export type DomRefs = {
   hintSave: HTMLSpanElement;
   hintSettings: HTMLSpanElement;
   hintPrint: HTMLSpanElement;
+  isolationBanner: HTMLDivElement;
+  isolationBannerClose: HTMLButtonElement;
   editorSizeRange: HTMLInputElement;
   consoleSizeRange: HTMLInputElement;
   editorSizeLabel: HTMLSpanElement;
@@ -124,6 +130,10 @@ export function getDomRefs(): DomRefs {
     shareWarnCancelBtn: byId<HTMLButtonElement>("shareWarnCancelBtn"),
     shareWarnDownloadBtn: byId<HTMLButtonElement>("shareWarnDownloadBtn"),
     shareWarnConfirmBtn: byId<HTMLButtonElement>("shareWarnConfirmBtn"),
+    asyncWarnOverlay: byId<HTMLDivElement>("asyncWarnOverlay"),
+    asyncWarnText: byId<HTMLDivElement>("asyncWarnText"),
+    asyncWarnCancelBtn: byId<HTMLButtonElement>("asyncWarnCancelBtn"),
+    asyncWarnConfirmBtn: byId<HTMLButtonElement>("asyncWarnConfirmBtn"),
     shareToast: byId<HTMLDivElement>("shareToast"),
     shareToastTitle: byId<HTMLDivElement>("shareToastTitle"),
     shareToastDesc: byId<HTMLDivElement>("shareToastDesc"),
@@ -141,6 +151,8 @@ export function getDomRefs(): DomRefs {
     hintSave: byId<HTMLSpanElement>("hintSave"),
     hintSettings: byId<HTMLSpanElement>("hintSettings"),
     hintPrint: byId<HTMLSpanElement>("hintPrint"),
+    isolationBanner: byId<HTMLDivElement>("isolationBanner"),
+    isolationBannerClose: byId<HTMLButtonElement>("isolationBannerClose"),
     editorSizeRange: byId<HTMLInputElement>("editorSizeRange"),
     consoleSizeRange: byId<HTMLInputElement>("consoleSizeRange"),
     editorSizeLabel: byId<HTMLSpanElement>("editorSizeLabel"),

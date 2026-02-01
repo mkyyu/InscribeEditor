@@ -3,7 +3,11 @@ type InputRequest = {
   resolve: (value: string) => void;
 };
 
-export function setupConsoleInput(consoleEl: HTMLDivElement) {
+export type ConsoleInputController = {
+  requestInput: (prompt?: string) => Promise<string>;
+};
+
+export function setupConsoleInput(consoleEl: HTMLDivElement): ConsoleInputController {
   const inputQueue: InputRequest[] = [];
   let activeInput: InputRequest | null = null;
 
@@ -74,6 +78,8 @@ export function setupConsoleInput(consoleEl: HTMLDivElement) {
 
   (window as any).__inscribeReadline = (prompt?: string) =>
     requestConsoleInput(prompt ? String(prompt) : "");
+
+  return { requestInput: requestConsoleInput };
 }
 
 export function rewriteInputCalls(source: string) {

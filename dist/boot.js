@@ -71,9 +71,21 @@ export async function boot() {
     const dom = getDomRefs();
     const state = createInitialState();
     const prefs = loadPrefs();
+    const showIsolationWarning = () => {
+        dom.isolationBanner.classList.add("show");
+    };
+    const hideIsolationWarning = () => {
+        dom.isolationBanner.classList.remove("show");
+    };
+    dom.isolationBannerClose.addEventListener("click", () => {
+        hideIsolationWarning();
+    });
+    if (!window.crossOriginIsolated) {
+        showIsolationWarning();
+    }
     const consoleApi = createConsoleController(dom);
     consoleApi.attachStdoutHandlers();
-    setupConsoleInput(dom.consoleEl);
+    const inputCtrl = setupConsoleInput(dom.consoleEl);
     let updatePrintConfirmState = () => { };
     const editorCtrl = createEditorController(dom, prefs, (isDirty) => {
         state.isDirty = !!isDirty;
@@ -100,7 +112,32 @@ export async function boot() {
     ui = createUiController(dom, editorCtrl.editor, refocusEditor, runDefault, runCell, () => fileCtrl.saveFile(), () => fileCtrl.openFile(), openPrintModal, openSettings);
     printCtrl = createPrintController(dom, () => editorCtrl.getValue(), consoleApi.collectOutput, ui.closeMenu, ui.openPrint, ui.closePrint);
     updatePrintConfirmState = printCtrl.updatePrintConfirmState;
-    pyodideCtrl = createPyodideController(state, consoleApi.addLine, () => updateStatusBar(state, dom), refocusEditor, editorCtrl.getCodeForMode, getRunModeLabel, dom.runBtn, dom.runModeBtn, prefs, consoleApi.resetStdoutBuffer, consoleApi.flushStdoutBuffer);
+    const confirmAsyncioRun = () => new Promise((resolve) => {
+        dom.asyncWarnOverlay.classList.add("active");
+        const cleanup = () => {
+            dom.asyncWarnCancelBtn.removeEventListener("click", onCancel);
+            dom.asyncWarnConfirmBtn.removeEventListener("click", onConfirm);
+            dom.asyncWarnOverlay.removeEventListener("click", onBackdrop);
+        };
+        const onCancel = () => {
+            dom.asyncWarnOverlay.classList.remove("active");
+            cleanup();
+            resolve(false);
+        };
+        const onConfirm = () => {
+            dom.asyncWarnOverlay.classList.remove("active");
+            cleanup();
+            resolve(true);
+        };
+        const onBackdrop = (e) => {
+            if (e.target === dom.asyncWarnOverlay)
+                onCancel();
+        };
+        dom.asyncWarnCancelBtn.addEventListener("click", onCancel);
+        dom.asyncWarnConfirmBtn.addEventListener("click", onConfirm);
+        dom.asyncWarnOverlay.addEventListener("click", onBackdrop);
+    });
+    pyodideCtrl = createPyodideController(state, consoleApi.addLine, () => updateStatusBar(state, dom), refocusEditor, editorCtrl.getCodeForMode, getRunModeLabel, dom.runBtn, dom.runModeBtn, prefs, consoleApi.resetStdoutBuffer, consoleApi.flushStdoutBuffer, consoleApi.handleStdout, inputCtrl.requestInput, showIsolationWarning, confirmAsyncioRun);
     const shareCtrl = createShareController(dom, () => editorCtrl.getValue(), consoleApi.addLine, () => fileCtrl.saveFile(), refocusEditor);
     fileCtrl.setFilename(safeLS.get(LS_KEYS.FILENAME) || "untitled.py");
     dom.aboutVersion.textContent = `v${APP_VERSION}`;

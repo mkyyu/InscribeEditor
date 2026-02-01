@@ -61,6 +61,7 @@ export function setupConsoleInput(consoleEl) {
         });
     }
     window.__inscribeReadline = (prompt) => requestConsoleInput(prompt ? String(prompt) : "");
+    return { requestInput: requestConsoleInput };
 }
 export function rewriteInputCalls(source) {
     const isIdentChar = (ch) => /[A-Za-z0-9_]/.test(ch);

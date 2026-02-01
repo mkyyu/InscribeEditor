@@ -158,6 +158,19 @@
       </div>
     </header>
 
+    <div class="isolationBanner" id="isolationBanner" role="status" aria-live="polite">
+      <div class="isolationBannerInner">
+        <span class="material-icons" aria-hidden="true">warning</span>
+        <div class="isolationBannerText">
+          <strong>Blocking input disabled.</strong>
+          <span>Enable COOP/COEP headers to use <code>input()</code> and <code>time.sleep()</code>.</span>
+        </div>
+        <button class="iconBtn" id="isolationBannerClose" type="button" aria-label="Dismiss warning">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+    </div>
+
     <main>
       <div class="split">
         <section class="pane editorPane" id="editorPane">
@@ -409,6 +422,28 @@
         <button class="toolBtn" id="shareWarnCancelBtn" type="button">Cancel</button>
         <button class="toolBtn" id="shareWarnDownloadBtn" type="button">Download .py</button>
         <button class="toolBtn primary" id="shareWarnConfirmBtn" type="button">Copy anyway</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Asyncio.run warning modal -->
+  <div class="overlay" id="asyncWarnOverlay" role="dialog" aria-modal="true" aria-labelledby="asyncWarnTitle">
+    <div class="modal modalSettings">
+      <div class="warnBlock">
+        <span class="material-icons" aria-hidden="true">warning</span>
+        <div>
+          <h2 id="asyncWarnTitle">Asyncio Run Warning</h2>
+          <div class="warnText" id="asyncWarnText">
+            This environment already runs an event loop. Use <code>await main()</code> instead of
+            <code>asyncio.run(main())</code>.
+          </div>
+          <div class="warnHint">Continuing will likely throw “cannot be called from a running event loop”.</div>
+        </div>
+      </div>
+
+      <div class="modalRow">
+        <button class="toolBtn" id="asyncWarnCancelBtn" type="button">Cancel</button>
+        <button class="toolBtn primary" id="asyncWarnConfirmBtn" type="button">Run anyway</button>
       </div>
     </div>
   </div>

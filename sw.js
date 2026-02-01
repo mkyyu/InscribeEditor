@@ -1,4 +1,4 @@
-const CACHE_NAME = "inscribe-pwa-v1";
+const CACHE_NAME = "inscribe-pwa-v2";
 const PRECACHE_URLS = [
   "/",
   "/index.html",
@@ -17,7 +17,8 @@ const PRECACHE_URLS = [
   "/assets/favicon/web-app-manifest-192x192.png",
   "/assets/favicon/web-app-manifest-512x512.png",
   "/dist/main.js",
-  "/dist/boot.js"
+  "/dist/boot.js",
+  "/dist/worker/pyodide-worker.js"
 ];
 
 self.addEventListener("install", (event) => {
@@ -37,7 +38,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    caches.match(event.request).then((cached) => {
+    caches.match(event.request, { ignoreSearch: true }).then((cached) => {
       if (cached) return cached;
       return fetch(event.request).then((response) => {
         const ok = response && response.status === 200 && response.type === "basic";

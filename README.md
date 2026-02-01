@@ -4,7 +4,7 @@ Inscribe Editor is a lightweight, in-browser Python editor and executor powered 
 It’s designed to be minimal, fast, and distraction-free — ideal for learning, experimenting, or running quick Python snippets directly in your browser.
 
 > [!IMPORTANT]
-> **Due to Pyodide’s in-browser runtime model, asynchronous Python features are not fully supported**. Inscribe is best suited for simple synchronous scripts. Async support is not a current priority.
+> Inscribe runs fully client-side and supports blocking <code>input()</code> and <code>time.sleep()</code> when cross-origin isolation (COOP/COEP) headers are enabled.
 
 👉 **Try it online:** https://py.mkyu.one  
 👉 You can also host it yourself using GitHub Pages or any static host.
@@ -21,6 +21,10 @@ It’s designed to be minimal, fast, and distraction-free — ideal for learning
 
 
 ## Changelog
+
+### v3.2
+- Worker-based runtime for blocking input() and time.sleep()
+- Cross-origin isolation headers and local COOP/COEP dev server
 
 ### v3.1
 - Shareable URLs with compressed code payloads
@@ -80,6 +84,13 @@ Pyodide requires HTTP (not <code>file://</code>):
 
 ```sh
 python3 -m http.server
+```
+
+For blocking <code>input()</code> and <code>time.sleep()</code> support, you must serve with
+COOP/COEP headers (cross-origin isolation). Use the included helper:
+
+```sh
+python3 scripts/serve.py
 ```
 
 </details>
